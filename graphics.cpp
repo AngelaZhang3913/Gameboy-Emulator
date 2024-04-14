@@ -38,6 +38,7 @@ void update_graphics(int cycles) {
 
 void set_lcd_status() {
     BYTE current_status = read_memory(0xFF41);
+
     if (!is_lcd_enabled()) {
         
     }
