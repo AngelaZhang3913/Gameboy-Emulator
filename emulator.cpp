@@ -1,4 +1,5 @@
 #include "typdef.h"
+#include "hardware.h"
 
 // opcode masks (only the ones with varying bits)
 // GMB 8 bit-load commands
@@ -57,7 +58,9 @@ void update() {
 
 int execute_next_opcode() {
     // returns the number of cycles for the instruction
-
+    BYTE opcode = read_memory(program_counter);
+    program_counter++;
+    return execute_opcode(opcode);
 }
 
 void update_timers(int cycles) {
@@ -75,6 +78,8 @@ void render_screen() {
 
 int execute_opcode(BYTE op) {
     // returns the number of cycles for the instruction
+
+    BYTE val;
     switch (op) {
         // 8 BIT LOAD (total 19)
         case 0xFA : // ld A, nn
@@ -96,6 +101,7 @@ int execute_opcode(BYTE op) {
         case 0x2A : // ldi A, HL
         case 0x32 : // ldd HL, A
             return 8;
+
         
         // 16 BIT LOAD (total 4)
         case 0xF9 : // ld SP, HL
@@ -107,22 +113,53 @@ int execute_opcode(BYTE op) {
             return 4;
 
         case 0xC6 : // add A, n
+            val = read_memory(program_counter);
+            program_counter++;
+            execute_add(false, val);
+            return 8;
         case 0xCE : // adc A, n
-        case 0xD6 : // sub n
-        case 0xDE : // sbc A
-        case 0xE6 : // and n
-        case 0xEE : // xor n
-        case 0xF6 : // or n
-        case 0xFE : // cp n
+            val = read_memory(program_counter);
+            program_counter++;
+            execute_add(true, val);
+            return 8;
+        case 0x86 : // add A, HL
+            val = read_memory(reg_HL.WORD);
+            execute_add(false, val);
+            return 8;
+        case 0x8E : // adc A, HL
+            val = read_memory(reg_HL.WORD);
+            execute_add(true, val);
             return 8;
 
-        case 0x86 : // add A, HL
-        case 0x8E : // adc A, HL
+        case 0xD6 : // sub n
+            val = read_memory(program_counter);
+            program_counter++;
+            execute_sub(false, val);
+            return 8;
+        case 0xDE : // sbc A
+            val = read_memory(program_counter);
+            program_counter++;
+            execute_sub(true, val);
+            return 8;
         case 0x96 : // sub HL
+            val = read_memory(reg_HL.WORD);
+            execute_sub(false, val);
+            return 8;
         case 0x9E : // sbc A, HL
+            val = read_memory(reg_HL.WORD);
+            execute_sub(true, val);
+            return 8;
+
+        case 0xE6 : // and n
         case 0xA6 : // and HL
+
+        case 0xEE : // xor n
         case 0xAE : // xor HL
+        
+        case 0xF6 : // or n
         case 0xB6 : // or HL
+        
+        case 0xFE : // cp n
         case 0xBE : // cp HL
             return 8;
 
@@ -188,12 +225,20 @@ int execute_opcode(BYTE op) {
     } else if (op & pop_rr_mask == 0b11000001) {
         return 12;
     } else if (op & add_A_r_mask == 0b10000000) {
+        val = get_reg_value(op & 0b111);
+        execute_add(false, val);
         return 4;
     } else if (op & adc_A_r_mask == 0b10001000) {
+        val = get_reg_value(op & 0b111);
+        execute_add(true, val);
         return 4;
     } else if (op & sub_r_mask == 0b10010000) {
+        val = get_reg_value(op & 0b111);
+        execute_sub(false, val);
         return 4;
     } else if (op & sbc_A_r_mask == 0b10011000) {
+        val = get_reg_value(op & 0b111);
+        execute_sub(true, val);
         return 4;
     } else if (op & cp_r_mask == 0b10111000) {
         return 4;
@@ -269,3 +314,63 @@ int execute_extended_opcode() {
     }
 }
 
+// for adding with registers and immediates (8 bit only)
+void execute_add(bool carry, BYTE n) {
+    BYTE sum = reg_AF.lo + n;
+    if(carry) sum += get_flag(FLAG_C);
+    reg_AF.lo = sum;
+
+    // set flags
+    set_flag(FLAG_Z, sum == 0);
+    set_flag(FLAG_S, 0);
+    set_flag(FLAG_H, get_bit(reg_AF.lo, 3) & get_bit(n, 3));
+    set_flag(FLAG_C, get_bit(reg_AF.lo, 7) & get_bit(n, 7));
+}
+
+void execute_sub(bool carry, BYTE n) {
+    BYTE diff = reg_AF.lo - n;
+    if(carry) diff -= get_flag(FLAG_C);
+    reg_AF.lo = diff;
+
+    // set flags
+    set_flag(FLAG_Z, diff == 0);
+    set_flag(FLAG_S, 1);
+    set_flag(FLAG_H, (get_bit(reg_AF.lo, 3) == 0) && (get_bit(n, 3) == 1));
+    set_flag(FLAG_C, (get_bit(reg_AF.lo, 7) == 0) && (get_bit(n, 7) == 1));
+}
+
+
+
+BYTE get_reg_value(BYTE bits) {
+    switch(bits) {
+        case 7 : // A
+            return reg_AF.lo;
+        case 0 : // B
+            return reg_BC.lo;
+        case 1 : // C
+            return reg_BC.hi;
+        case 2 : // D
+            return reg_DE.lo;
+        case 3 : // E
+            return reg_DE.hi;
+        case 4 : // H
+            return reg_HL.lo;
+        case 5 : // L
+            return reg_HL.hi;
+        case 6 : // HL
+            return reg_HL.wrd;
+    }
+}
+
+BYTE get_bit(BYTE num, BYTE bit) {
+    return (num & (1 << bit)) >> bit;
+}
+
+BYTE get_flag(BYTE bit_num) {
+    return get_bit(reg_AF.hi, bit_num);
+}
+
+void set_flag(BYTE bit_num, bool b) {
+    if(b) reg_AF.hi = reg_AF.hi | (1 << bit_num);
+    else reg_AF.hi = reg_AF.hi & ~(1 << bit_num)
+}
