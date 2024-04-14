@@ -1,58 +1,32 @@
-#include <stdio.h>
-
-/* -------------
-    REGISTERS
- ------------- */
-
-// 8 registers of 8-bits
-// paired like AF, BC, DE, HL
-// A is accumulator, F is flag register
-
-// flag definitions - the bit in the F register
-// where the flag is
-
-#define FLAG_Z 7 // zero flag
-#define FLAG_S 6 // subtract flag
-#define FLAG_H 5 // half carry flag
-#define FLAG_C 4 // carry flag
-
-union Register {
-    WORD wrd;
-    struct {
-        BYTE lo;
-        BYTE hi;
-    };
-};
-
-// register pairs
-Register reg_AF;
-Register reg_BC;
-Register reg_DE;
-Register reg_HL;
-
-/* -------------
-      PC/SP
- ------------- */
-
-WORD program_counter;
-Register stack_pointer;
-
-/* -------------
-  INITIALIZATION
- ------------- */
-
-program_counter = 0x100;
-stack_pointer = 0xFFFE;
-reg_AF = 0x01B0;
-reg_BC = 0x0013;
-reg_DE = 0x00D8;
-reg_HL = 0x014D;
-
-// ... and the special rom registers
-
+#include <hardware.h>
 
 /* -------------
      MEMORY
  ------------- */
 
 // write memory
+
+write_memory(WORD address, BYTE data) {
+    if (address < 0x8000) {
+        // ROM banking - make another function
+    } else if (address <= 0xE000 && address < 0xFE00) {
+        // echo RAM: also write in RAM section
+        // don't need to implement
+    } else if (address >= 0xFEA0 && address < 0xFEFF) {
+        // restricted ??? still don't do anything
+    } else {
+        // no restriction
+        rom[address] = data;
+    }
+}
+
+initialize_ram_bank() {
+    memset(&ram_banks, 0, sizeof(ram_banks));
+}
+
+BYTE read_memory(WORD address) const {
+    if ((address >= 0x4000) && (address <= 0x7FFF)) {
+        
+    }
+}
+
