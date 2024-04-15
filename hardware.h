@@ -1,4 +1,5 @@
-#include "typedef.h"
+#include <stdio.h>
+#include <typedef.h>
 
 /* -------------
     REGISTERS
