@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <typedef.h>
 
 /* -------------
     REGISTERS
@@ -25,17 +26,17 @@ union Register {
 };
 
 // register pairs
-Register reg_AF = 0x01B0;
-Register reg_BC = 0x0013;
-Register reg_DE = 0x00D8;
-Register reg_HL = 0x014D;
+Register reg_AF = {0x01B0};
+Register reg_BC = {0x0013};
+Register reg_DE = {0x00D8};
+Register reg_HL = {0x014D};
 
 /* -------------
       PC/SP
  ------------- */
 
 WORD program_counter = 0x100;
-Register stack_pointer = 0xFFFE;
+Register stack_pointer = {0xFFFE};
 
 /* -------------
   INITIALIZATION
@@ -57,16 +58,16 @@ Register stack_pointer = 0xFFFE;
 BYTE rom[0x10000];
 BYTE current_rom_bank = 1;
 
-extern write_memory(WORD address, BYTE data);
+void write_memory(WORD address, BYTE data);
 
 // ram banking
 BYTE ram_banks[0x8000];
-extern initialize_ram_bank() ;
+void initialize_ram_bank() ;
 BYTE current_ram_bank = 0;
 
 BYTE cartridge_memory[0x200000] ;
 
-BYTE read_memory(WORD address) const ;
+BYTE read_memory(WORD address) ;
 
 bool test_bit(WORD word, int index) ;
 
