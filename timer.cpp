@@ -1,7 +1,8 @@
 #include "timer.h"
 #include "hardware.h"
+#include "typedef.h"
 
-update_timers(int cycle_count) {
+void update_timers(int cycle_count) {
     execute_divider_register(cycle_count);
 
     if (is_clock_enabled()) {
@@ -15,7 +16,7 @@ update_timers(int cycle_count) {
             if (timer == 255) {
                 // timer overflow
                 write_memory(TIMA, read_memory(TMA));
-                request_interupt(2);
+                //request_interupt(2);
             } else {
                 write_memory(TIMA, timer + 1);
             }
@@ -23,11 +24,11 @@ update_timers(int cycle_count) {
     }
 }
 
-bool s_clock_enabled() const {
+bool is_clock_enabled() {
    return test_bit(read_memory(TMC),2);
 }
 
-BYTE get_clock_frequency() const {
+BYTE get_clock_frequency() {
     // first two bits of tmc
     return read_memory(TMC) & 3;
 }
