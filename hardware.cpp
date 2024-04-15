@@ -1,28 +1,41 @@
-#include <hardware.h>
+#include "hardware.h"
 #include <cstring>
 #include <iostream>
 using namespace std;
+
+Register reg_AF;
+Register reg_BC;
+Register reg_DE;
+Register reg_HL;
+
+WORD program_counter;
+Register stack_pointer;
+
+BYTE rom[0x10000];
+BYTE current_rom_bank;
+BYTE ram_banks[0x8000];
+BYTE current_ram_bank;
+BYTE cartridge_memory[0x200000];
+
+bool enable_ram;
+bool rom_banking;
+
+void initialize() {
+    reg_AF.wrd = 0x01B0;
+    reg_BC.wrd = 0x0013;
+    reg_DE.wrd= 0x00D8;
+    reg_HL.wrd = 0x014D;
+    program_counter = 0x100;
+    stack_pointer.wrd = 0xFFFE;
+    current_rom_bank = 1;
+    current_ram_bank = 0;
+}
 
 /* -------------
      MEMORY
  ------------- */
 
 // write memory
-
-void write_memory(WORD address, BYTE data) {
-    if (address < 0x8000) {
-        // ROM banking - make another function
-        handle_banking(address, data);
-    } else if (address <= 0xE000 && address < 0xFE00) {
-        // echo RAM: also write in RAM section
-        // don't need to implement
-    } else if (address >= 0xFEA0 && address < 0xFEFF) {
-        // restricted ??? still don't do anything
-    } else {
-        // no restriction
-        rom[address] = data;
-    }
-}
 
 void handle_banking(WORD address, BYTE data) {
     if (address < 0x2000) {
@@ -51,8 +64,24 @@ void handle_banking(WORD address, BYTE data) {
         }
     } else if (address >= 0x6000 && address < 0x8000) {
         // change mode between rom and ram
-        rom_banking = (data & 0x1 == 0) ? true : false;
+        rom_banking = ((data & 0x1) == 0) ? true : false;
         if (rom_banking) current_ram_bank = 0;
+    }
+}
+
+
+void write_memory(WORD address, BYTE data) {
+    if (address < 0x8000) {
+        // ROM banking - make another function
+        handle_banking(address, data);
+    } else if (address <= 0xE000 && address < 0xFE00) {
+        // echo RAM: also write in RAM section
+        // don't need to implement
+    } else if (address >= 0xFEA0 && address < 0xFEFF) {
+        // restricted ??? still don't do anything
+    } else {
+        // no restriction
+        rom[address] = data;
     }
 }
 

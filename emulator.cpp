@@ -1,5 +1,4 @@
-#include "typedef.h"
-#include "hardware.h"
+#include "emulator.h"
 
 // opcode masks (only the ones with varying bits)
 // GMB 8 bit-load commands
@@ -177,6 +176,71 @@ void execute_sub(bool carry, BYTE n) {
     // printf("flag c: %d\n", get_flag(FLAG_C) );
 }
 
+void execute_and(BYTE n) {
+    BYTE res = reg_AF.hi & n;
+    set_flag(FLAG_Z, res == 0);
+    set_flag(FLAG_S, 0);
+    set_flag(FLAG_H, 0);
+    set_flag(FLAG_C, 0);
+    reg_AF.hi = res;
+}
+
+void execute_xor(BYTE n) {
+    BYTE res = reg_AF.hi ^ n;
+    set_flag(FLAG_Z, res == 0);
+    set_flag(FLAG_S, 0);
+    set_flag(FLAG_H, 0);
+    set_flag(FLAG_C, 0);
+    reg_AF.hi = res;
+}
+
+void execute_or(BYTE n) {
+    BYTE res = reg_AF.hi | n;
+    set_flag(FLAG_Z, res == 0);
+    set_flag(FLAG_S, 0);
+    set_flag(FLAG_H, 0);
+    set_flag(FLAG_C, 0);
+    reg_AF.hi = res;
+}
+
+void execute_cp(BYTE n) {
+    BYTE diff = reg_AF.hi - n;
+    // set flags
+    set_flag(FLAG_Z, diff == 0);
+    set_flag(FLAG_S, 1);
+    set_flag(FLAG_H, (get_bit(reg_AF.hi, 3) == 0) && (get_bit(n, 3) == 1));
+    set_flag(FLAG_C, (get_bit(reg_AF.hi, 7) == 0) && (get_bit(n, 7) == 1));
+}
+
+void set_reg_8(BYTE reg, BYTE val) {
+    switch(reg) {
+        case 7 : // A
+            reg_AF.hi = val;
+        case 0 : // B
+            reg_BC.hi = val;
+        case 1 : // C
+            reg_BC.lo = val;
+        case 2 : // D
+            reg_DE.hi = val;
+        case 3 : // E
+            reg_DE.lo = val;
+        case 4 : // H
+            reg_HL.hi = val;
+        case 5 : // L
+            reg_HL.lo = val;
+        case 6 : // HL
+            reg_HL.wrd = val;
+    }
+}
+
+void execute_inc(BYTE reg, BYTE n) {
+    BYTE res = n++;
+    set_flag(FLAG_Z, res == 0);
+    set_flag(FLAG_S, 0);
+    set_flag(FLAG_H, 0);
+    set_reg_8(reg, res);
+}
+
 int execute_opcode(BYTE op) {
     // returns the number of cycles for the instruction
 
@@ -208,60 +272,87 @@ int execute_opcode(BYTE op) {
         case 0xF9 : // ld SP, HL
             return 8;
         
-        // 8 BIT ARITHMETIC/LOGICAL (total 30)
+        /* 8 BIT ARITHMETIC/LOGICAL */
         case 0x27 : // daa
         case 0x2F : // cpl
             return 4;
 
-        // case 0xC6 : // add A, n
-        //     val = read_memory(program_counter);
-        //     program_counter++;
-        //     execute_add(false, val);
-        //     return 8;
-        // case 0xCE : // adc A, n
-        //     val = read_memory(program_counter);
-        //     program_counter++;
-        //     execute_add(true, val);
-        //     return 8;
-        // case 0x86 : // add A, HL
-        //     val = read_memory(reg_HL.wrd);
-        //     execute_add(false, val);
-        //     return 8;
-        // case 0x8E : // adc A, HL
-        //     val = read_memory(reg_HL.wrd);
-        //     execute_add(true, val);
-        //     return 8;
+        case 0xC6 : // add A, n
+            val = read_memory(program_counter);
+            program_counter++;
+            execute_add(false, val);
+            return 8;
+        case 0xCE : // adc A, n
+            val = read_memory(program_counter);
+            program_counter++;
+            execute_add(true, val);
+            return 8;
+        case 0x86 : // add A, HL
+            val = read_memory(reg_HL.wrd);
+            execute_add(false, val);
+            return 8;
+        case 0x8E : // adc A, HL
+            val = read_memory(reg_HL.wrd);
+            execute_add(true, val);
+            return 8;
 
-        // case 0xD6 : // sub n
-        //     val = read_memory(program_counter);
-        //     program_counter++;
-        //     execute_sub(false, val);
-        //     return 8;
-        // case 0xDE : // sbc A
-        //     val = read_memory(program_counter);
-        //     program_counter++;
-        //     execute_sub(true, val);
-        //     return 8;
-        // case 0x96 : // sub HL
-        //     val = read_memory(reg_HL.wrd);
-        //     execute_sub(false, val);
-        //     return 8;
-        // case 0x9E : // sbc A, HL
-        //     val = read_memory(reg_HL.wrd);
-        //     execute_sub(true, val);
-        //     return 8;
+        case 0xD6 : // sub n
+            val = read_memory(program_counter);
+            program_counter++;
+            execute_sub(false, val);
+            return 8;
+        case 0xDE : // sbc A
+            val = read_memory(program_counter);
+            program_counter++;
+            execute_sub(true, val);
+            return 8;
+        case 0x96 : // sub HL
+            val = read_memory(reg_HL.wrd);
+            execute_sub(false, val);
+            return 8;
+        case 0x9E : // sbc A, HL
+            val = read_memory(reg_HL.wrd);
+            execute_sub(true, val);
+            return 8;
 
         case 0xE6 : // and n
+            val = read_memory(program_counter);
+            program_counter++;
+            execute_and(val);
+            return 8;
         case 0xA6 : // and HL
+            val = read_memory(reg_HL.wrd);
+            execute_and(val);
+            return 8;
 
         case 0xEE : // xor n
+            val = read_memory(program_counter);
+            program_counter++;
+            execute_xor(val);
+            return 8;
         case 0xAE : // xor HL
-        
+            val = read_memory(reg_HL.wrd);
+            execute_xor(val);
+            return 8;
+
         case 0xF6 : // or n
+            val = read_memory(program_counter);
+            program_counter++;
+            execute_or(val);
+            return 8;
         case 0xB6 : // or HL
+            val = read_memory(reg_HL.wrd);
+            execute_or(val);
+            return 8;
         
         case 0xFE : // cp n
+            val = read_memory(program_counter);
+            program_counter++;
+            execute_cp(val);
+            return 8;
         case 0xBE : // cp HL
+            val = read_memory(reg_HL.wrd);
+            execute_cp(val);
             return 8;
 
         case 0x34 : // inc HL
@@ -342,16 +433,24 @@ int execute_opcode(BYTE op) {
         execute_sub(true, val);
         return 4;
     } else if ((op & cp_r_mask) == 0b10111000) {
+        val = get_reg_value(op & 0b111);
+        
         return 4;
     } else if ((op & inc_r_mask) == 0b00000100) {
         return 4;
     } else if ((op & dec_r_mask )== 0b00000101) {
         return 4;
     } else if ((op & and_r_mask) == 0b10100000) {
+        val = get_reg_value(op & 0b111);
+        execute_and(val);
         return 4;
     } else if ((op & or_r_mask) == 0b10110000) {
+        val = get_reg_value(op & 0b111);
+        execute_or(val);
         return 4;
     } else if ((op & xor_r_mask) == 0b10101000) {
+        val = get_reg_value(op & 0b111);
+        execute_xor(val);
         return 4;
     } else if ((op & inc_rr_mask) == 0b000000011) {
         return 8;
@@ -385,7 +484,7 @@ void update() {
     while (current_cycle < 69905) {
         int new_cycles = execute_next_opcode();
         current_cycle += new_cycles;
-        //update_timers(new_cycles);
+        update_timers(new_cycles);
         //update_graphics(new_cycles);
         execute_interrupts();
     }

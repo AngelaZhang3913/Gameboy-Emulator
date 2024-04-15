@@ -1,5 +1,6 @@
+#pragma once
 #include <stdio.h>
-#include <typedef.h>
+#include "typedef.h"
 
 /* -------------
     REGISTERS
@@ -26,17 +27,17 @@ union Register {
 };
 
 // register pairs
-Register reg_AF = {0x01B0};
-Register reg_BC = {0x0013};
-Register reg_DE = {0x00D8};
-Register reg_HL = {0x014D};
+extern Register reg_AF;
+extern Register reg_BC;
+extern Register reg_DE;
+extern Register reg_HL;
 
 /* -------------
       PC/SP
  ------------- */
 
-WORD program_counter = 0x100;
-Register stack_pointer = {0xFFFE};
+extern WORD program_counter;
+extern Register stack_pointer;
 
 /* -------------
   INITIALIZATION
@@ -55,17 +56,17 @@ Register stack_pointer = {0xFFFE};
      MEMORY
  ------------- */
 
-BYTE rom[0x10000];
-BYTE current_rom_bank = 1;
+extern BYTE rom[0x10000];
+extern BYTE current_rom_bank;
 
 void write_memory(WORD address, BYTE data);
 
 // ram banking
-BYTE ram_banks[0x8000];
+extern BYTE ram_banks[0x8000];
 void initialize_ram_bank() ;
-BYTE current_ram_bank = 0;
+extern BYTE current_ram_bank;
 
-BYTE cartridge_memory[0x200000] ;
+extern BYTE cartridge_memory[0x200000] ;
 
 BYTE read_memory(WORD address) ;
 
@@ -73,6 +74,6 @@ bool test_bit(WORD word, int index) ;
 
 bool test_bit(BYTE byte, int index) ;
 
-bool enable_ram;
+extern bool enable_ram;
 
-bool rom_banking;
+extern bool rom_banking;
