@@ -74,3 +74,5 @@ bool test_bit(WORD word, int index) ;
 bool test_bit(BYTE byte, int index) ;
 
 bool enable_ram;
+
+bool rom_banking;
