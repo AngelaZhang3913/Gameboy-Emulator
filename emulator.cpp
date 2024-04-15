@@ -135,6 +135,14 @@ void set_flag(BYTE bit_num, bool b) {
     else reg_AF.lo = reg_AF.lo & ~(1 << bit_num);
 }
 
+void print_result() {
+    printf("result = %d\n", reg_AF.hi);
+    printf("flag z: %d\n", get_flag(FLAG_Z) );
+    printf("flag s: %d\n", get_flag(FLAG_S) );
+    printf("flag h: %d\n", get_flag(FLAG_H) );
+    printf("flag c: %d\n", get_flag(FLAG_C) );
+}
+
 // for adding with registers and immediates (8 bit only)
 void execute_add(bool carry, BYTE n) {
     printf("A = %d\n", reg_AF.hi);
@@ -151,11 +159,7 @@ void execute_add(bool carry, BYTE n) {
     set_flag(FLAG_H, half_sum > 0xf);
     set_flag(FLAG_C, int_sum > 0xff);
     reg_AF.hi = sum;
-    printf("sum = %d\n", reg_AF.hi);
-    printf("flag z: %d\n", get_flag(FLAG_Z) );
-    printf("flag s: %d\n", get_flag(FLAG_S) );
-    printf("flag h: %d\n", get_flag(FLAG_H) );
-    printf("flag c: %d\n", get_flag(FLAG_C) );
+    print_result();
 }
 
 void execute_sub(bool carry, BYTE n) {
@@ -244,17 +248,59 @@ void set_reg_8(BYTE reg, BYTE val) {
 }
 
 void execute_inc(BYTE reg, BYTE n) {
-    BYTE res = n++;
+    BYTE res = n + 1;
     set_flag(FLAG_Z, res == 0);
     set_flag(FLAG_S, 0);
-    set_flag(FLAG_H, 0);
+    set_flag(FLAG_H, (n & 0b1111) == 0xf);
     set_reg_8(reg, res);
+    print_result();
+}
+
+void execute_dec(BYTE reg, BYTE n) {
+    BYTE res = n - 1;
+    set_flag(FLAG_Z, res == 0);
+    set_flag(FLAG_S, 0);
+    set_flag(FLAG_H, (n & 0b1111) == 0);
+    set_reg_8(reg, res);
+    print_result();
+}
+
+void execute_daa() {
+    int int_res = reg_AF.hi;
+    if (!get_flag(FLAG_S)) {
+        if ((reg_AF.hi & 0b1111) > 0x9) {
+            int_res += 0x6;
+            reg_AF.hi += 0x6;
+        } else if (reg_AF.hi > 0x99) {
+            int_res += 0x60;
+            reg_AF.hi += 0x60;
+        }
+    }
+    if (get_flag(FLAG_H)) {
+        int_res += 0x6;
+        reg_AF.hi += 0x6;
+    } 
+    if (get_flag(FLAG_C)) {
+        int_res += 0x60;
+        reg_AF.hi += 0x60;
+    }
+
+    set_flag(FLAG_Z, reg_AF.hi == 0);
+    set_flag(FLAG_H, 0);
+    set_flag(FLAG_C, int_res > 0xff);
+}
+
+void execute_cpl() {
+    reg_AF.hi = ~reg_AF.hi;
+    set_flag(FLAG_S, 1);
+    set_flag(FLAG_H, 1);
 }
 
 int execute_opcode(BYTE op) {
     // returns the number of cycles for the instruction
 
     BYTE val;
+    BYTE reg_num;
     switch (op) {
         // 8 BIT LOAD (total 19)
         case 0xFA : // ld A, nn
@@ -284,7 +330,10 @@ int execute_opcode(BYTE op) {
         
         /* 8 BIT ARITHMETIC/LOGICAL */
         case 0x27 : // daa
+            execute_daa();
+            return 4;
         case 0x2F : // cpl
+            execute_cpl();
             return 4;
 
         case 0xC6 : // add A, n
@@ -366,6 +415,9 @@ int execute_opcode(BYTE op) {
             return 8;
 
         case 0x34 : // inc HL
+            // val = read_memory(reg_HL.wrd);
+            // execute_inc(val);
+            return 12;
         case 0x35 : // dec HL
             return 12;
 
@@ -444,11 +496,17 @@ int execute_opcode(BYTE op) {
         return 4;
     } else if ((op & cp_r_mask) == 0b10111000) {
         val = get_reg_value(op & 0b111);
-        
+        execute_cp(val);
         return 4;
     } else if ((op & inc_r_mask) == 0b00000100) {
+        reg_num = (op >> 3) & 0b111;
+        val = get_reg_value(reg_num);
+        execute_inc(reg_num, val);
         return 4;
     } else if ((op & dec_r_mask )== 0b00000101) {
+        reg_num = (op >> 3) & 0b111;
+        val = get_reg_value(reg_num);
+        execute_dec(reg_num, val);
         return 4;
     } else if ((op & and_r_mask) == 0b10100000) {
         val = get_reg_value(op & 0b111);
