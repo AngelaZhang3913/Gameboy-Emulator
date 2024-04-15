@@ -49,3 +49,10 @@ BYTE read_memory(WORD address) const {
     }
 }
 
+bool test_bit(WORD word, int index) {
+    return ((word >> index) & 1) == 1;
+}
+
+bool test_bit(BYTE byte, int index) {
+    return ((byte >> index) & 1) == 1;
+}

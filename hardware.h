@@ -67,3 +67,7 @@ BYTE current_ram_bank = 0;
 BYTE cartridge_memory[0x200000] ;
 
 BYTE read_memory(WORD address) const ;
+
+bool test_bit(WORD word, int index) ;
+
+bool test_bit(BYTE byte, int index) ;
