@@ -3,33 +3,22 @@
 #include <iostream>
 using namespace std;
 
-Register reg_AF;
-Register reg_BC;
-Register reg_DE;
-Register reg_HL;
+Register reg_AF = {0x01B0};
+Register reg_BC = {0x0013};
+Register reg_DE = {0x00D8};
+Register reg_HL = {0x014D};
 
-WORD program_counter;
-Register stack_pointer;
+WORD program_counter = 0x100;
+Register stack_pointer = {0xFFFE};
 
 BYTE rom[0x10000];
-BYTE current_rom_bank;
+BYTE current_rom_bank = 1;
 BYTE ram_banks[0x8000];
-BYTE current_ram_bank;
+BYTE current_ram_bank = 0;
 BYTE cartridge_memory[0x200000];
 
 bool enable_ram;
 bool rom_banking;
-
-void initialize() {
-    reg_AF.wrd = 0x01B0;
-    reg_BC.wrd = 0x0013;
-    reg_DE.wrd= 0x00D8;
-    reg_HL.wrd = 0x014D;
-    program_counter = 0x100;
-    stack_pointer.wrd = 0xFFFE;
-    current_rom_bank = 1;
-    current_ram_bank = 0;
-}
 
 /* -------------
      MEMORY
