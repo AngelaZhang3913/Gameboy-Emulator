@@ -25,28 +25,28 @@ union Register {
 };
 
 // register pairs
-Register reg_AF;
-Register reg_BC;
-Register reg_DE;
-Register reg_HL;
+Register reg_AF = 0x01B0;
+Register reg_BC = 0x0013;
+Register reg_DE = 0x00D8;
+Register reg_HL = 0x014D;
 
 /* -------------
       PC/SP
  ------------- */
 
-WORD program_counter;
-Register stack_pointer;
+WORD program_counter = 0x100;
+Register stack_pointer = 0xFFFE;
 
 /* -------------
   INITIALIZATION
  ------------- */
 
-program_counter = 0x100;
-stack_pointer = 0xFFFE;
-reg_AF = 0x01B0;
-reg_BC = 0x0013;
-reg_DE = 0x00D8;
-reg_HL = 0x014D;
+// program_counter = 0x100;
+// stack_pointer = 0xFFFE;
+// reg_AF = 0x01B0;
+// reg_BC = 0x0013;
+// reg_DE = 0x00D8;
+// reg_HL = 0x014D;
 
 // ... and the special rom registers
 
@@ -71,3 +71,5 @@ BYTE read_memory(WORD address) const ;
 bool test_bit(WORD word, int index) ;
 
 bool test_bit(BYTE byte, int index) ;
+
+bool enable_ram;
