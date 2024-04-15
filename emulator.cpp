@@ -137,43 +137,49 @@ void set_flag(BYTE bit_num, bool b) {
 
 // for adding with registers and immediates (8 bit only)
 void execute_add(bool carry, BYTE n) {
-    // printf("A = %d\n", reg_AF.hi);
-    // printf("n = %d\n", n);
+    printf("A = %d\n", reg_AF.hi);
+    printf("n = %d\n", n);
     BYTE sum = reg_AF.hi + n;
+    int int_sum = reg_AF.hi + n;
     if(carry) sum += get_flag(FLAG_C);
+    BYTE half_sum = (reg_AF.hi & 0b1111) + (n & 0b1111);
+    printf("half sum = %d\n", half_sum);
 
     // set flags
     set_flag(FLAG_Z, sum == 0);
     set_flag(FLAG_S, 0);
-    set_flag(FLAG_H, get_bit(reg_AF.hi, 3) & get_bit(n, 3));
-    set_flag(FLAG_C, get_bit(reg_AF.hi, 7) & get_bit(n, 7));
+    set_flag(FLAG_H, half_sum > 0xf);
+    set_flag(FLAG_C, int_sum > 0xff);
     reg_AF.hi = sum;
-    // printf("sum = %d\n", reg_AF.hi);
-    // printf("flag z: %d\n", get_flag(FLAG_Z) );
-    // printf("flag s: %d\n", get_flag(FLAG_S) );
-    // printf("flag h: %d\n", get_flag(FLAG_H) );
-    // printf("flag c: %d\n", get_flag(FLAG_C) );
+    printf("sum = %d\n", reg_AF.hi);
+    printf("flag z: %d\n", get_flag(FLAG_Z) );
+    printf("flag s: %d\n", get_flag(FLAG_S) );
+    printf("flag h: %d\n", get_flag(FLAG_H) );
+    printf("flag c: %d\n", get_flag(FLAG_C) );
 }
 
 void execute_sub(bool carry, BYTE n) {
-    // printf("A = %d\n", reg_AF.hi);
-    // printf("n = %d\n", n);
+    printf("A = %d\n", reg_AF.hi);
+    printf("n = %d\n", n);
     BYTE diff = reg_AF.hi - n;
     if(carry) diff -= get_flag(FLAG_C);
+    BYTE bottomHalfA = reg_AF.hi & 0b1111;
+    BYTE bottomHalfN = n & 0b1111;
+    
 
     // set flags
     set_flag(FLAG_Z, diff == 0);
     set_flag(FLAG_S, 1);
     // printf("reg_af half carry is 0: %d\n", (get_bit(reg_AF.hi, 3) == 0));
     // printf("n half carry is 1: %d\n", (get_bit(n, 3) == 1));
-    set_flag(FLAG_H, (get_bit(reg_AF.hi, 3) == 0) && (get_bit(n, 3) == 1));
-    set_flag(FLAG_C, (get_bit(reg_AF.hi, 7) == 0) && (get_bit(n, 7) == 1));
+    set_flag(FLAG_H, bottomHalfA < bottomHalfN);
+    set_flag(FLAG_C, reg_AF.hi < n);
     reg_AF.hi = diff;
-    // printf("diff = %d\n", reg_AF.hi);
-    // printf("flag z: %d\n", get_flag(FLAG_Z) );
-    // printf("flag s: %d\n", get_flag(FLAG_S) );
-    // printf("flag h: %d\n", get_flag(FLAG_H) );
-    // printf("flag c: %d\n", get_flag(FLAG_C) );
+    printf("diff = %d\n", reg_AF.hi);
+    printf("flag z: %d\n", get_flag(FLAG_Z) );
+    printf("flag s: %d\n", get_flag(FLAG_S) );
+    printf("flag h: %d\n", get_flag(FLAG_H) );
+    printf("flag c: %d\n", get_flag(FLAG_C) );
 }
 
 void execute_and(BYTE n) {
@@ -205,11 +211,15 @@ void execute_or(BYTE n) {
 
 void execute_cp(BYTE n) {
     BYTE diff = reg_AF.hi - n;
+    BYTE bottomHalfA = reg_AF.hi & 0b1111;
+    BYTE bottomHalfN = n & 0b1111;
+    
+
     // set flags
     set_flag(FLAG_Z, diff == 0);
     set_flag(FLAG_S, 1);
-    set_flag(FLAG_H, (get_bit(reg_AF.hi, 3) == 0) && (get_bit(n, 3) == 1));
-    set_flag(FLAG_C, (get_bit(reg_AF.hi, 7) == 0) && (get_bit(n, 7) == 1));
+    set_flag(FLAG_H, bottomHalfA < bottomHalfN);
+    set_flag(FLAG_C, reg_AF.hi < n);
 }
 
 void set_reg_8(BYTE reg, BYTE val) {
