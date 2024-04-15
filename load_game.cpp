@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include "hardware.h"
+#include <cstring>
+#include <iostream>
+using namespace std;
+#include "typedef.h"
 
-load_game() {
+void load_game_method() {
     memset(cartridge_memory, 0, sizeof(BYTE)) ;
 
     FILE *game_in;

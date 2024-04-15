@@ -5,4 +5,8 @@
 
 int timer_counter = 1024 ;
 
-extern update_timers(int cycle) ;
+int divider_counter = 0 ;
+
+int divider_register = 0 ;
+
+extern void update_timers(int cycle) ;

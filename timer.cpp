@@ -2,10 +2,10 @@
 #include "hardware.h"
 
 update_timers(int cycle_count) {
-    divider_register(cycles_count);
+    execute_divider_register(cycle_count);
 
     if (is_clock_enabled()) {
-        timer_counter -= cycles_count;
+        timer_counter -= cycle_count;
         
         // update timer when enough cycles have passed
         if (timer_counter <= 0) {
@@ -25,4 +25,34 @@ update_timers(int cycle_count) {
 
 bool s_clock_enabled() const {
    return test_bit(read_memory(TMC),2);
+}
+
+BYTE get_clock_frequency() const {
+    // first two bits of tmc
+    return read_memory(TMC) & 3;
+}
+
+void set_clock_frequency() {
+    BYTE clock_frequency = get_clock_frequency();
+
+    // timmer_counter = clockspeed / frequency
+    if (clock_frequency == 0) {
+        timer_counter = 1024; // frequency 4096
+    } else if (clock_frequency == 1) {
+        timer_counter = 16; // frequency 262144
+    } else if (clock_frequency == 2) {
+        timer_counter = 64; // frequency 65536
+    } else if (clock_frequency == 3) {
+        timer_counter = 256; // frequency 16382
+    }
+}
+
+void execute_divider_register(int cycle_count) {
+    divider_register += cycle_count;
+    if (divider_counter >= 255) {
+        divider_counter = 0;
+        rom[0xFF04]++;
+    } else {
+        divider_counter++;
+    }
 }
