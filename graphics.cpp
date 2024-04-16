@@ -1,4 +1,6 @@
-#include "typdef.h"
+#include "typedef.h"
+#include "hardware.h"
+#include "interrupts.h"
 
 int scanline_counter = 0;
 
@@ -12,19 +14,19 @@ void update_graphics(int cycles) {
         return;
     }
 
-    if (scaline_counter <= 0) {
+    if (scanline_counter <= 0) {
         scanline_counter = 456;
         rom[0xFF44]++; // current scan line is stored in 0xFF44
         BYTE current_scanline = read_memory(0xFF44);
 
         if (current_scanline == 144) {
             // vertical blank
-            request_interupt(0);
+            request_interrupts(0);
         } else if (current_scanline >= 153) {
             // reset scan line
             rom[0xFF44] = 0;
         } else if (current_scanline < 144) {
-            draw_scanline();
+            //draw_scanline();
         }
     }
 }
@@ -45,5 +47,5 @@ void set_lcd_status() {
 }
 
 bool is_lcd_enabled() {
-    return is_bit_true(read_memory(0xFF40), 7);
+    return test_bit(read_memory(0xFF40), 7);
 }
