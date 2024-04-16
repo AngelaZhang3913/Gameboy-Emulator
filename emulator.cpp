@@ -275,6 +275,18 @@ void execute_rotate_left_circular(BYTE reg, BYTE n) {
     set_flag(FLAG_C, bit_7);
 }
 
+void execute_rlc_HL(WORD addr, BYTE n) {
+    int bit_7 = n >> 7;
+    BYTE res = n << 1 + bit_7;
+    if (res == 0) {
+        set_flag(FLAG_Z, 1);
+    }
+    write_memory(addr, res);
+    set_flag(FLAG_S, 0);
+    set_flag(FLAG_H, 0);
+    set_flag(FLAG_C, bit_7);
+}
+
 // rotate left
 // void execute_rla() {
 //     int bit_7 = reg_AF.hi >> 7;
@@ -294,6 +306,18 @@ void execute_rotate_left(BYTE reg, BYTE n) {
         set_flag(FLAG_Z, 1);
     } 
     set_reg_8(reg, res);
+    set_flag(FLAG_S, 0);
+    set_flag(FLAG_H, 0);
+    set_flag(FLAG_C, bit_7);
+}
+
+void execute_rl_HL(WORD addr, BYTE n) {
+    int bit_7 = n >> 7;
+    BYTE res = n << 1 + get_flag(FLAG_C);
+    if (res == 0) {
+        set_flag(FLAG_Z, 1);
+    } 
+    write_memory(addr, res);
     set_flag(FLAG_S, 0);
     set_flag(FLAG_H, 0);
     set_flag(FLAG_C, bit_7);
@@ -323,6 +347,18 @@ void execute_rotate_right_circular(BYTE reg, BYTE n) {
     set_flag(FLAG_C, bit_0);
 }
 
+void execute_rrc_HL(WORD addr, BYTE n) {
+    int bit_0 = n & 1;
+    BYTE res = n >> 1 + bit_0 << 7;
+    if (res == 0) {
+        set_flag(FLAG_Z, 1);
+    } 
+    write_memory(addr, res);
+    set_flag(FLAG_S, 0);
+    set_flag(FLAG_H, 0);
+    set_flag(FLAG_C, bit_0);
+}
+
 // rotate right
 // void execute_rra() {
 //     int bit_0 = reg_AF.hi & 1;
@@ -347,6 +383,18 @@ void execute_rotate_right(BYTE reg, BYTE n) {
     set_flag(FLAG_C, bit_0);
 }
 
+void execute_rr_HL(WORD addr, BYTE n) {
+    int bit_0 = n & 1;
+    BYTE res = n >> 1 + get_flag(FLAG_C) << 7;
+    if (res == 0) {
+        set_flag(FLAG_Z, 1);
+    } 
+    write_memory(addr, res);
+    set_flag(FLAG_S, 0);
+    set_flag(FLAG_H, 0);
+    set_flag(FLAG_C, bit_0);
+}
+
 int execute_extended_opcode() {
     BYTE op; // = readmemory
     
@@ -354,13 +402,21 @@ int execute_extended_opcode() {
     BYTE reg_num;
     switch(op) {
         case 0x06 : // rlc HL
-            
+            val = read_memory(reg_HL.wrd);
+            execute_rlc_HL(reg_HL.wrd, val);
+            return 16;
         case 0x16 : // rl HL
-            
+            val = read_memory(reg_HL.wrd);
+            execute_rl_HL(reg_HL.wrd, val);
+            return 16;
         case 0x0E : // rrc HL
-            
+            val = read_memory(reg_HL.wrd);
+            execute_rrc_HL(reg_HL.wrd, val);
+            return 16;
         case 0x1E : // rr HL
-            
+            val = read_memory(reg_HL.wrd);
+            execute_rr_HL(reg_HL.wrd, val);
+            return 16;
         case 0x26 : // sla HL
         case 0x36 : // swap HL
         case 0x2E : // sra HL
