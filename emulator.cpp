@@ -477,14 +477,17 @@ int execute_opcode(BYTE op) {
             return 12;
         
         // ROTATE AND SHIFT (total 20)
-        case 0x07 : 
+        case 0x07 : // rlca
             execute_rlca();
-            return 16; // rlca
+            return 4; 
         case 0x17 : // rla
             execute_rla();
-            return 16;
+            return 4;
         case 0x0F : // rrca
+            execute_rrca();
+            return 4;
         case 0x1F : // rra
+            execute_rra();
             return 4;
         
         // CPU CONTROL
