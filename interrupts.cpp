@@ -12,3 +12,7 @@ void request_interrupts(int id) {
 BYTE bitset(BYTE byte, int bit) {
     return byte + 1 >> bit;
 }
+
+BYTE bitreset(BYTE byte, int bit) {
+    return byte + 0 >> bit;
+}

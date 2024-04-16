@@ -296,6 +296,54 @@ void execute_cpl() {
     set_flag(FLAG_H, 1);
 }
 
+// rotate left circular
+void execute_rlca() {
+    int bit_7 = reg_AF.hi >> 7;
+    reg_AF.hi = reg_AF.hi << 1 + bit_7;
+    if (reg_AF.hi == 0) {
+        set_flag(FLAG_Z, 1);
+    } 
+    set_flag(FLAG_S, 0);
+    set_flag(FLAG_H, 0);
+    set_flag(FLAG_C, bit_7);
+}
+
+// rotate left
+void execute_rla() {
+    int bit_7 = reg_AF.hi >> 7;
+    reg_AF.hi = reg_AF.hi << 1 + get_flag(FLAG_C);
+    if (reg_AF.hi == 0) {
+        set_flag(FLAG_Z, 1);
+    } 
+    set_flag(FLAG_S, 0);
+    set_flag(FLAG_H, 0);
+    set_flag(FLAG_C, bit_7);
+}
+
+// rotate right circular
+void execute_rrca() {
+    int bit_0 = reg_AF.hi & 1;
+    reg_AF.hi = reg_AF.hi >> 1 + bit_0 << 7;
+    if (reg_AF.hi == 0) {
+        set_flag(FLAG_Z, 1);
+    } 
+    set_flag(FLAG_S, 0);
+    set_flag(FLAG_H, 0);
+    set_flag(FLAG_C, bit_0);
+}
+
+// rotate right
+void execute_rra() {
+    int bit_0 = reg_AF.hi & 1;
+    reg_AF.hi = reg_AF.hi >> 1 + get_flag(FLAG_C) << 7;
+    if (reg_AF.hi == 0) {
+        set_flag(FLAG_Z, 1);
+    } 
+    set_flag(FLAG_S, 0);
+    set_flag(FLAG_H, 0);
+    set_flag(FLAG_C, bit_0);
+}
+
 int execute_opcode(BYTE op) {
     // returns the number of cycles for the instruction
 
@@ -429,8 +477,12 @@ int execute_opcode(BYTE op) {
             return 12;
         
         // ROTATE AND SHIFT (total 20)
-        case 0x07 : // rlca
+        case 0x07 : 
+            execute_rlca();
+            return 16; // rlca
         case 0x17 : // rla
+            execute_rla();
+            return 16;
         case 0x0F : // rrca
         case 0x1F : // rra
             return 4;

@@ -29,7 +29,7 @@ bool is_clock_enabled() {
 }
 
 BYTE get_clock_frequency() {
-    // first two bits of tmc
+    // first two bits of timer controller
     return read_memory(TMC) & 3;
 }
 
