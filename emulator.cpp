@@ -348,13 +348,31 @@ void execute_rotate_right(BYTE reg, BYTE n) {
 }
 
 int execute_extended_opcode() {
-    BYTE opcode; // = readmemory
+    BYTE op; // = readmemory
     
-    switch(opcode) {
+    BYTE val;
+    BYTE reg_num;
+    switch(op) {
         case 0x06 : // rlc HL
+            reg_num = op & 0b111;
+            val = get_reg_value(reg_num);
+            execute_rotate_left_circular(reg_num, val);
+            return 16;
         case 0x16 : // rl HL
+            reg_num = op & 0b111;
+            val = get_reg_value(reg_num);
+            execute_rotate_left(reg_num, val);
+            return 16;
         case 0x0E : // rrc HL
+            reg_num = op & 0b111;
+            val = get_reg_value(reg_num);
+            execute_rotate_right_circular(reg_num, val);
+            return 16;
         case 0x1E : // rr HL
+            reg_num = op & 0b111;
+            val = get_reg_value(reg_num);
+            execute_rotate_right(reg_num, val);
+            return 16;
         case 0x26 : // sla HL
         case 0x36 : // swap HL
         case 0x2E : // sra HL
@@ -362,7 +380,7 @@ int execute_extended_opcode() {
             return 16;
     }
 
-    switch(opcode & rotate_shift_mask) {
+    switch(op & rotate_shift_mask) {
         case 0 : // rlc r
         case 0b00010000 : // rl r
         case 0b00001000 : // rrc r
@@ -374,14 +392,14 @@ int execute_extended_opcode() {
             return 8;
     }
 
-    switch(opcode & bit_mask_1) {
+    switch(op & bit_mask_1) {
         case 0b01000000 : // bit b r
         case 0b10000000 : // res b r
         case 0b11000000 : // set b r
             return 8;
     }
 
-    switch(opcode & bit_mask_2) {
+    switch(op & bit_mask_2) {
         case 0b01000110 : // bit b HL
             return 12;
         case 0b10000110 : // res b HL
