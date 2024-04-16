@@ -354,25 +354,13 @@ int execute_extended_opcode() {
     BYTE reg_num;
     switch(op) {
         case 0x06 : // rlc HL
-            reg_num = op & 0b111;
-            val = get_reg_value(reg_num);
-            execute_rotate_left_circular(reg_num, val);
-            return 16;
+            
         case 0x16 : // rl HL
-            reg_num = op & 0b111;
-            val = get_reg_value(reg_num);
-            execute_rotate_left(reg_num, val);
-            return 16;
+            
         case 0x0E : // rrc HL
-            reg_num = op & 0b111;
-            val = get_reg_value(reg_num);
-            execute_rotate_right_circular(reg_num, val);
-            return 16;
+            
         case 0x1E : // rr HL
-            reg_num = op & 0b111;
-            val = get_reg_value(reg_num);
-            execute_rotate_right(reg_num, val);
-            return 16;
+            
         case 0x26 : // sla HL
         case 0x36 : // swap HL
         case 0x2E : // sra HL
@@ -382,9 +370,25 @@ int execute_extended_opcode() {
 
     switch(op & rotate_shift_mask) {
         case 0 : // rlc r
+            reg_num = op & 0b111;
+            val = get_reg_value(reg_num);
+            execute_rotate_left_circular(reg_num, val);
+            return 8;
         case 0b00010000 : // rl r
+            reg_num = op & 0b111;
+            val = get_reg_value(reg_num);
+            execute_rotate_left(reg_num, val);
+            return 8;
         case 0b00001000 : // rrc r
+            reg_num = op & 0b111;
+            val = get_reg_value(reg_num);
+            execute_rotate_right_circular(reg_num, val);
+            return 8;
         case 0b00011000 : // rr r
+            reg_num = op & 0b111;
+            val = get_reg_value(reg_num);
+            execute_rotate_right(reg_num, val);
+            return 8;
         case 0b00100000 : // sla r
         case 0b00110000 : // swap r
         case 0b00101000 : // sra r
