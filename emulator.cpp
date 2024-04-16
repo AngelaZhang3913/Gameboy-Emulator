@@ -43,10 +43,6 @@ BYTE call_cc_nn_mask = 0b11100111;
 BYTE ret_cc_mask = 0b11100111;
 BYTE rst_n_mask = 0b11000111;
 
-void update_timers(int cycles) {
-
-}
-
 void execute_interrupts() {
 
 }
@@ -252,20 +248,9 @@ void execute_cpl() {
 }
 
 // rotate left circular
-// void execute_rlca() {
-//     int bit_7 = reg_AF.hi >> 7;
-//     reg_AF.hi = reg_AF.hi << 1 + bit_7;
-//     if (reg_AF.hi == 0) {
-//         set_flag(FLAG_Z, 1);
-//     } 
-//     set_flag(FLAG_S, 0);
-//     set_flag(FLAG_H, 0);
-//     set_flag(FLAG_C, bit_7);
-// }
-
 void execute_rotate_left_circular(BYTE reg, BYTE n) {
     int bit_7 = n >> 7;
-    BYTE res = n << 1 + bit_7;
+    BYTE res = (n << 1) + bit_7;
     if (res == 0) {
         set_flag(FLAG_Z, 1);
     }
@@ -273,11 +258,12 @@ void execute_rotate_left_circular(BYTE reg, BYTE n) {
     set_flag(FLAG_S, 0);
     set_flag(FLAG_H, 0);
     set_flag(FLAG_C, bit_7);
+    print_result();
 }
 
 void execute_rlc_HL(WORD addr, BYTE n) {
     int bit_7 = n >> 7;
-    BYTE res = n << 1 + bit_7;
+    BYTE res = (n << 1) + bit_7;
     if (res == 0) {
         set_flag(FLAG_Z, 1);
     }
@@ -288,20 +274,10 @@ void execute_rlc_HL(WORD addr, BYTE n) {
 }
 
 // rotate left
-// void execute_rla() {
-//     int bit_7 = reg_AF.hi >> 7;
-//     reg_AF.hi = reg_AF.hi << 1 + get_flag(FLAG_C);
-//     if (reg_AF.hi == 0) {
-//         set_flag(FLAG_Z, 1);
-//     } 
-//     set_flag(FLAG_S, 0);
-//     set_flag(FLAG_H, 0);
-//     set_flag(FLAG_C, bit_7);
-// }
-
 void execute_rotate_left(BYTE reg, BYTE n) {
     int bit_7 = n >> 7;
-    BYTE res = n << 1 + get_flag(FLAG_C);
+    printf("%d\n", get_flag(FLAG_C));
+    BYTE res = (n << 1) + get_flag(FLAG_C);
     if (res == 0) {
         set_flag(FLAG_Z, 1);
     } 
@@ -309,11 +285,12 @@ void execute_rotate_left(BYTE reg, BYTE n) {
     set_flag(FLAG_S, 0);
     set_flag(FLAG_H, 0);
     set_flag(FLAG_C, bit_7);
+    print_result();
 }
 
 void execute_rl_HL(WORD addr, BYTE n) {
     int bit_7 = n >> 7;
-    BYTE res = n << 1 + get_flag(FLAG_C);
+    BYTE res = (n << 1) + get_flag(FLAG_C);
     if (res == 0) {
         set_flag(FLAG_Z, 1);
     } 
@@ -324,20 +301,9 @@ void execute_rl_HL(WORD addr, BYTE n) {
 }
 
 // rotate right circular
-// void execute_rrca() {
-//     int bit_0 = reg_AF.hi & 1;
-//     reg_AF.hi = reg_AF.hi >> 1 + bit_0 << 7;
-//     if (reg_AF.hi == 0) {
-//         set_flag(FLAG_Z, 1);
-//     } 
-//     set_flag(FLAG_S, 0);
-//     set_flag(FLAG_H, 0);
-//     set_flag(FLAG_C, bit_0);
-// }
-
 void execute_rotate_right_circular(BYTE reg, BYTE n) {
     int bit_0 = n & 1;
-    BYTE res = n >> 1 + bit_0 << 7;
+    BYTE res = (n >> 1) + (bit_0 << 7);
     if (res == 0) {
         set_flag(FLAG_Z, 1);
     } 
@@ -345,11 +311,12 @@ void execute_rotate_right_circular(BYTE reg, BYTE n) {
     set_flag(FLAG_S, 0);
     set_flag(FLAG_H, 0);
     set_flag(FLAG_C, bit_0);
+    print_result();
 }
 
 void execute_rrc_HL(WORD addr, BYTE n) {
     int bit_0 = n & 1;
-    BYTE res = n >> 1 + bit_0 << 7;
+    BYTE res = (n >> 1) + (bit_0 << 7);
     if (res == 0) {
         set_flag(FLAG_Z, 1);
     } 
@@ -360,20 +327,9 @@ void execute_rrc_HL(WORD addr, BYTE n) {
 }
 
 // rotate right
-// void execute_rra() {
-//     int bit_0 = reg_AF.hi & 1;
-//     reg_AF.hi = reg_AF.hi >> 1 + get_flag(FLAG_C) << 7;
-//     if (reg_AF.hi == 0) {
-//         set_flag(FLAG_Z, 1);
-//     } 
-//     set_flag(FLAG_S, 0);
-//     set_flag(FLAG_H, 0);
-//     set_flag(FLAG_C, bit_0);
-// }
-
 void execute_rotate_right(BYTE reg, BYTE n) {
     int bit_0 = n & 1;
-    BYTE res = n >> 1 + get_flag(FLAG_C) << 7;
+    BYTE res = (n >> 1) + (get_flag(FLAG_C) << 7);
     if (res == 0) {
         set_flag(FLAG_Z, 1);
     } 
@@ -381,11 +337,12 @@ void execute_rotate_right(BYTE reg, BYTE n) {
     set_flag(FLAG_S, 0);
     set_flag(FLAG_H, 0);
     set_flag(FLAG_C, bit_0);
+    print_result();
 }
 
 void execute_rr_HL(WORD addr, BYTE n) {
     int bit_0 = n & 1;
-    BYTE res = n >> 1 + get_flag(FLAG_C) << 7;
+    BYTE res = (n >> 1) + (get_flag(FLAG_C) << 7);
     if (res == 0) {
         set_flag(FLAG_Z, 1);
     } 
@@ -395,8 +352,16 @@ void execute_rr_HL(WORD addr, BYTE n) {
     set_flag(FLAG_C, bit_0);
 }
 
+void execute_shift_left(BYTE reg) {
+    BYTE n = get_reg_value(reg);
+    BYTE res = n << 1;
+    set_reg_8(reg, res);
+    set_flag(FLAG_Z, res == 0);
+}
+
 int execute_extended_opcode() {
-    BYTE op; // = readmemory
+    BYTE op = read_memory(program_counter); // = readmemory
+    program_counter++;
     
     BYTE val;
     BYTE reg_num;
@@ -446,6 +411,9 @@ int execute_extended_opcode() {
             execute_rotate_right(reg_num, val);
             return 8;
         case 0b00100000 : // sla r
+            reg_num = op & 0b111;
+            execute_shift_left(reg_num);
+            return 8;
         case 0b00110000 : // swap r
         case 0b00101000 : // sra r
         case 0b00111000 : // srl r

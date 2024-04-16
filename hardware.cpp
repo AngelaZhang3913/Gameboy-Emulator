@@ -19,6 +19,7 @@ BYTE current_rom_bank = 1;
 BYTE ram_banks[0x8000];
 BYTE current_ram_bank = 0;
 BYTE cartridge_memory[0x200000];
+BYTE game_memory[0x80000];
 
 bool enable_ram;
 bool rom_banking;
@@ -74,7 +75,7 @@ void write_memory(WORD address, BYTE data) {
     } else if (address == 0xFF04) {
         // divider register is restricted (don't edit)
         rom[0xFF04] = 0 ;
-    } else if (address == TMC) {
+    } /*else if (address == TMC) {
         // trying to change timer controller
         BYTE current_frequency = get_clock_frequency();
         game_memory[TMC] = current_frequency;
@@ -84,9 +85,11 @@ void write_memory(WORD address, BYTE data) {
         if (current_frequency != new_frequency) {
             set_clock_frequency();
         }
-    } else if (address == 0xFF44) {
+    } */else if (address == 0xFF44) {
         // can't write to scan line memory address
         rom[address] = 0 ;
+    } else if (address == 0xFF46) {
+        //dma_transfer(data);
     } else {
         // no restriction
         rom[address] = data;
@@ -119,9 +122,17 @@ bool test_bit(BYTE byte, int index) {
 
 // set the specified bit to 1
 BYTE bitset(BYTE byte, int bit) {
-    return byte + 1 >> bit;
+    return ((1 << bit) | byte);
 }
 
 BYTE bitreset(BYTE byte, int bit) {
-    return byte + 0 >> bit;
+    return ((~(1 << bit)) & byte);
 }
+
+/*
+// direct memory access
+dma_transfer(BYTE data) {
+    WORD source_address = data << 8;
+
+}
+*/

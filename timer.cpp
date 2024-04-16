@@ -2,27 +2,9 @@
 #include "hardware.h"
 #include "typedef.h"
 
-void update_timers(int cycle_count) {
-    execute_divider_register(cycle_count);
-
-    if (is_clock_enabled()) {
-        timer_counter -= cycle_count;
-        
-        // update timer when enough cycles have passed
-        if (timer_counter <= 0) {
-            set_clock_frequency();
-
-            BYTE timer = read_memory(TIMA);
-            if (timer == 255) {
-                // timer overflow
-                write_memory(TIMA, read_memory(TMA));
-                //request_interupt(2);
-            } else {
-                write_memory(TIMA, timer + 1);
-            }
-        }
-    }
-}
+int timer_counter = 1024 ;
+int divider_counter = 0 ;
+int divider_register = 0 ;
 
 bool is_clock_enabled() {
    return test_bit(read_memory(TMC),2);
@@ -55,5 +37,27 @@ void execute_divider_register(int cycle_count) {
         rom[0xFF04]++;
     } else {
         divider_counter++;
+    }
+}
+
+void update_timers(int cycle_count) {
+    execute_divider_register(cycle_count);
+
+    if (is_clock_enabled()) {
+        timer_counter -= cycle_count;
+        
+        // update timer when enough cycles have passed
+        if (timer_counter <= 0) {
+            set_clock_frequency();
+
+            BYTE timer = read_memory(TIMA);
+            if (timer == 255) {
+                // timer overflow
+                write_memory(TIMA, read_memory(TMA));
+                //request_interupt(2);
+            } else {
+                write_memory(TIMA, timer + 1);
+            }
+        }
     }
 }

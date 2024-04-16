@@ -79,7 +79,7 @@ extern bool enable_ram;
 extern bool rom_banking;
 
 // basic internal game memory
-extern BYTE game_memory[0x8000];
+extern BYTE game_memory[0x80000]; // don't know if this actually works
 
 extern BYTE bitset(BYTE byte, int bit) ;
 
