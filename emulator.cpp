@@ -55,51 +55,6 @@ void render_screen() {
     
 }
 
-int execute_extended_opcode() {
-    BYTE opcode; // = readmemory
-    
-    switch(opcode) {
-        case 0x06 : // rlc HL
-        case 0x16 : // rl HL
-        case 0x0E : // rrc HL
-        case 0x1E : // rr HL
-        case 0x26 : // sla HL
-        case 0x36 : // swap HL
-        case 0x2E : // sra HL
-        case 0x3E : // srl HL
-            return 16;
-    }
-
-    switch(opcode & rotate_shift_mask) {
-        case 0 : // rlc r
-        case 0b00010000 : // rl r
-        case 0b00001000 : // rrc r
-        case 0b00011000 : // rr r
-        case 0b00100000 : // sla r
-        case 0b00110000 : // swap r
-        case 0b00101000 : // sra r
-        case 0b00111000 : // srl r
-            return 8;
-    }
-
-    switch(opcode & bit_mask_1) {
-        case 0b01000000 : // bit b r
-        case 0b10000000 : // res b r
-        case 0b11000000 : // set b r
-            return 8;
-    }
-
-    switch(opcode & bit_mask_2) {
-        case 0b01000110 : // bit b HL
-            return 12;
-        case 0b10000110 : // res b HL
-        case 0b11000110 : // set b HL
-            return 16;
-    }
-
-    return 0;
-}
-
 BYTE get_reg_value(BYTE bits) {
     switch(bits) {
         case 7 : // A
@@ -297,51 +252,144 @@ void execute_cpl() {
 }
 
 // rotate left circular
-void execute_rlca() {
-    int bit_7 = reg_AF.hi >> 7;
-    reg_AF.hi = reg_AF.hi << 1 + bit_7;
-    if (reg_AF.hi == 0) {
+// void execute_rlca() {
+//     int bit_7 = reg_AF.hi >> 7;
+//     reg_AF.hi = reg_AF.hi << 1 + bit_7;
+//     if (reg_AF.hi == 0) {
+//         set_flag(FLAG_Z, 1);
+//     } 
+//     set_flag(FLAG_S, 0);
+//     set_flag(FLAG_H, 0);
+//     set_flag(FLAG_C, bit_7);
+// }
+
+void execute_rotate_left_circular(BYTE reg, BYTE n) {
+    int bit_7 = n >> 7;
+    BYTE res = n << 1 + bit_7;
+    if (res == 0) {
         set_flag(FLAG_Z, 1);
-    } 
+    }
+    set_reg_8(reg, res);
     set_flag(FLAG_S, 0);
     set_flag(FLAG_H, 0);
     set_flag(FLAG_C, bit_7);
 }
 
 // rotate left
-void execute_rla() {
-    int bit_7 = reg_AF.hi >> 7;
-    reg_AF.hi = reg_AF.hi << 1 + get_flag(FLAG_C);
-    if (reg_AF.hi == 0) {
+// void execute_rla() {
+//     int bit_7 = reg_AF.hi >> 7;
+//     reg_AF.hi = reg_AF.hi << 1 + get_flag(FLAG_C);
+//     if (reg_AF.hi == 0) {
+//         set_flag(FLAG_Z, 1);
+//     } 
+//     set_flag(FLAG_S, 0);
+//     set_flag(FLAG_H, 0);
+//     set_flag(FLAG_C, bit_7);
+// }
+
+void execute_rotate_left(BYTE reg, BYTE n) {
+    int bit_7 = n >> 7;
+    BYTE res = n << 1 + get_flag(FLAG_C);
+    if (res == 0) {
         set_flag(FLAG_Z, 1);
     } 
+    set_reg_8(reg, res);
     set_flag(FLAG_S, 0);
     set_flag(FLAG_H, 0);
     set_flag(FLAG_C, bit_7);
 }
 
 // rotate right circular
-void execute_rrca() {
-    int bit_0 = reg_AF.hi & 1;
-    reg_AF.hi = reg_AF.hi >> 1 + bit_0 << 7;
-    if (reg_AF.hi == 0) {
+// void execute_rrca() {
+//     int bit_0 = reg_AF.hi & 1;
+//     reg_AF.hi = reg_AF.hi >> 1 + bit_0 << 7;
+//     if (reg_AF.hi == 0) {
+//         set_flag(FLAG_Z, 1);
+//     } 
+//     set_flag(FLAG_S, 0);
+//     set_flag(FLAG_H, 0);
+//     set_flag(FLAG_C, bit_0);
+// }
+
+void execute_rotate_right_circular(BYTE reg, BYTE n) {
+    int bit_0 = n & 1;
+    BYTE res = n >> 1 + bit_0 << 7;
+    if (res == 0) {
         set_flag(FLAG_Z, 1);
     } 
+    set_reg_8(reg, res);
     set_flag(FLAG_S, 0);
     set_flag(FLAG_H, 0);
     set_flag(FLAG_C, bit_0);
 }
 
 // rotate right
-void execute_rra() {
-    int bit_0 = reg_AF.hi & 1;
-    reg_AF.hi = reg_AF.hi >> 1 + get_flag(FLAG_C) << 7;
-    if (reg_AF.hi == 0) {
+// void execute_rra() {
+//     int bit_0 = reg_AF.hi & 1;
+//     reg_AF.hi = reg_AF.hi >> 1 + get_flag(FLAG_C) << 7;
+//     if (reg_AF.hi == 0) {
+//         set_flag(FLAG_Z, 1);
+//     } 
+//     set_flag(FLAG_S, 0);
+//     set_flag(FLAG_H, 0);
+//     set_flag(FLAG_C, bit_0);
+// }
+
+void execute_rotate_right(BYTE reg, BYTE n) {
+    int bit_0 = n & 1;
+    BYTE res = n >> 1 + get_flag(FLAG_C) << 7;
+    if (res == 0) {
         set_flag(FLAG_Z, 1);
     } 
+    set_reg_8(reg, res);
     set_flag(FLAG_S, 0);
     set_flag(FLAG_H, 0);
     set_flag(FLAG_C, bit_0);
+}
+
+int execute_extended_opcode() {
+    BYTE opcode; // = readmemory
+    
+    switch(opcode) {
+        case 0x06 : // rlc HL
+        case 0x16 : // rl HL
+        case 0x0E : // rrc HL
+        case 0x1E : // rr HL
+        case 0x26 : // sla HL
+        case 0x36 : // swap HL
+        case 0x2E : // sra HL
+        case 0x3E : // srl HL
+            return 16;
+    }
+
+    switch(opcode & rotate_shift_mask) {
+        case 0 : // rlc r
+        case 0b00010000 : // rl r
+        case 0b00001000 : // rrc r
+        case 0b00011000 : // rr r
+        case 0b00100000 : // sla r
+        case 0b00110000 : // swap r
+        case 0b00101000 : // sra r
+        case 0b00111000 : // srl r
+            return 8;
+    }
+
+    switch(opcode & bit_mask_1) {
+        case 0b01000000 : // bit b r
+        case 0b10000000 : // res b r
+        case 0b11000000 : // set b r
+            return 8;
+    }
+
+    switch(opcode & bit_mask_2) {
+        case 0b01000110 : // bit b HL
+            return 12;
+        case 0b10000110 : // res b HL
+        case 0b11000110 : // set b HL
+            return 16;
+    }
+
+    return 0;
 }
 
 int execute_opcode(BYTE op) {
@@ -477,17 +525,22 @@ int execute_opcode(BYTE op) {
             return 12;
         
         // ROTATE AND SHIFT (total 20)
+        // 7 is the A register
         case 0x07 : // rlca
-            execute_rlca();
+            val = get_reg_value(7);
+            execute_rotate_left_circular(7, val);
             return 4; 
         case 0x17 : // rla
-            execute_rla();
+            val = get_reg_value(7);
+            execute_rotate_left(7, val);
             return 4;
         case 0x0F : // rrca
-            execute_rrca();
+            val = get_reg_value(7);
+            execute_rotate_right_circular(7, val);
             return 4;
         case 0x1F : // rra
-            execute_rra();
+            val = get_reg_value(7);
+            execute_rotate_right(7, val);
             return 4;
         
         // CPU CONTROL
