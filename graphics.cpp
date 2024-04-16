@@ -23,7 +23,7 @@ void update_graphics(int cycles) {
 
         if (current_scanline == 144) {
             // vertical blank
-            request_interrupts(0);
+            request_interrupt(0);
         } else if (current_scanline >= 153) {
             // reset scan line
             rom[0xFF44] = 0;
@@ -72,10 +72,44 @@ void set_lcd_status() {
     if (current_scanline >= 144) {
         // vblank mode (01)
         new_mode = 1;
-        current_status = bitset(current_status,0) ;
-        current_status = bitreset(current_status,1) ;
+        current_status = bitset(current_status, 0) ;
+        current_status = bitreset(current_status, 1) ;
         should_request_interrupt = test_bit(current_status, 4); // interrupt enabled for mode 1 controlled by bit 4
+    } else {
+        if (scanline_counter >= 376) {
+            // Searching Sprites Atts
+            new_mode = 2 ;
+            current_status = bitset(current_status, 1) ;
+            current_status = bitreset(current_status, 0) ;
+            should_request_interrupt = test_bit(current_status, 5) ;
+        } else if (scanline_counter >= 204) {
+            new_mode = 3;
+            current_status = bitset(current_status, 1) ;
+            current_status = bitset(current_status, 0) ;
+        } else {
+            new_mode = 0;
+            current_status = bitreset(current_status,1) ;
+            current_status = bitreset(current_status,0) ;
+            should_request_interrupt = test_bit(current_status, 3) ;
+        }
     }
+
+    if (should_request_interrupt && (current_mode != new_mode)) {
+        // request interrupt since a new mode was entered
+        request_interrupt(1);
+    }
+
+    if (current_scanline == read_memory(0xFF45)) {
+        // current scanline is the same as the scanline the game is interested in (for special effects)
+        current_status = bitset(current_status, 2) ;
+        if (test_bit(current_status, 6)) {
+            request_interrupt(1);
+        } 
+    } else {
+        current_status = bitreset(current_status, 2) ;
+    }
+    
+    write_memory(0xFF41, current_status);
 }
 
 bool is_lcd_enabled() {

@@ -1,3 +1,3 @@
 #include "typedef.h"
 
-extern void request_interrupts(int id) ;
+extern void request_interrupt(int id) ;
