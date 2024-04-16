@@ -77,3 +77,6 @@ bool test_bit(BYTE byte, int index) ;
 extern bool enable_ram;
 
 extern bool rom_banking;
+
+// basic internal game memory
+extern BYTE game_memory[0x8000];

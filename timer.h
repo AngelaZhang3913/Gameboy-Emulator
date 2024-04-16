@@ -9,4 +9,11 @@ int divider_counter = 0 ;
 
 int divider_register = 0 ;
 
+extern BYTE get_clock_frequency() ;
+
 extern void update_timers(int cycle) ;
+
+extern void set_clock_frequency();
+
+
+

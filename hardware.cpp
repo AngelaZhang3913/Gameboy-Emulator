@@ -1,6 +1,7 @@
 // IGNORE THIS PUSH
 
 #include "hardware.h"
+#include "timer.h"
 #include <cstring>
 #include <iostream>
 using namespace std;
@@ -70,7 +71,21 @@ void write_memory(WORD address, BYTE data) {
         // don't need to implement
     } else if (address >= 0xFEA0 && address < 0xFEFF) {
         // restricted ??? still don't do anything
-    } else {
+    } else if (address == 0xFF04) {
+        // divider register is restricted (don't edit)
+        rom[0xFF04] = 0 ;
+    } else if (address == TMC) {
+        // trying to change timer controller
+        BYTE current_frequency = get_clock_frequency();
+        game_memory[TMC] = current_frequency;
+        BYTE new_frequency = get_clock_frequency();
+
+        // check if the new frequency is different
+        if (current_frequency != new_frequency) {
+            set_clock_frequency();
+        }
+    }
+    else {
         // no restriction
         rom[address] = data;
     }
