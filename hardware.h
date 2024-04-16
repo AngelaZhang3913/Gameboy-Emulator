@@ -80,3 +80,7 @@ extern bool rom_banking;
 
 // basic internal game memory
 extern BYTE game_memory[0x8000];
+
+extern BYTE bitset(BYTE byte, int bit) ;
+
+extern BYTE bitreset(BYTE byte, int bit) ;

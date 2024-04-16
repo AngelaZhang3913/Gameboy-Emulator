@@ -7,12 +7,3 @@ void request_interrupts(int id) {
     request = bitset(request, id);
 
 }
-
-// set the specified bit to 1
-BYTE bitset(BYTE byte, int bit) {
-    return byte + 1 >> bit;
-}
-
-BYTE bitreset(BYTE byte, int bit) {
-    return byte + 0 >> bit;
-}

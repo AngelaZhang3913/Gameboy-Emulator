@@ -84,8 +84,10 @@ void write_memory(WORD address, BYTE data) {
         if (current_frequency != new_frequency) {
             set_clock_frequency();
         }
-    }
-    else {
+    } else if (address == 0xFF44) {
+        // can't write to scan line memory address
+        rom[address] = 0 ;
+    } else {
         // no restriction
         rom[address] = data;
     }
@@ -113,4 +115,13 @@ bool test_bit(WORD word, int index) {
 
 bool test_bit(BYTE byte, int index) {
     return ((byte >> index) & 1) == 1;
+}
+
+// set the specified bit to 1
+BYTE bitset(BYTE byte, int bit) {
+    return byte + 1 >> bit;
+}
+
+BYTE bitreset(BYTE byte, int bit) {
+    return byte + 0 >> bit;
 }
