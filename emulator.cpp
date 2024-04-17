@@ -429,7 +429,18 @@ int execute_opcode(BYTE op) {
             execute_ld_to_mem(reg_HL.wrd, val);
             return 12;
         case 0xF0 : // ld A, FF00+n
+            program_counter++;
+            second = read_memory(program_counter);
+            addr = 0xFF00 + second;
+            val = read_memory(addr);
+            execute_ld_to_reg(7, val);
+            return 12;
         case 0xE0 : // ld FF00+n, A
+            program_counter++;
+            second = read_memory(program_counter);
+            addr = 0xFF00 + second;
+            val = get_reg_value(7);
+            execute_ld_to_mem(addr, val);
             return 12;
 
         case 0x0A : // ld A, BC
