@@ -65,13 +65,18 @@ void handle_banking(WORD address, BYTE data) {
 
 void write_memory(WORD address, BYTE data) {
     if (address < 0x8000) {
-        // ROM banking - make another function
+        // ROM banking
         handle_banking(address, data);
+    }
+    else if (address >= 0xA000 && address < 0xC000) {
+        if (enable_ram) {
+            ram_banks[address - 0xA000 + (current_ram_bank*0x2000)] = data;
+        }
     } else if (address <= 0xE000 && address < 0xFE00) {
         // echo RAM: also write in RAM section
         // don't need to implement
     } else if (address >= 0xFEA0 && address < 0xFEFF) {
-        // restricted ??? still don't do anything
+        // restricted - don't edit
     } else if (address == 0xFF04) {
         // divider register is restricted (don't edit)
         rom[0xFF04] = 0 ;
