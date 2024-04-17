@@ -84,7 +84,9 @@ Register get_register(BYTE bits) {
         case 3:
             return stack_pointer;
     }
-    return reg_AF; // this should not happen, I can't figure out how to return null :(
+    Register empty;
+    empty.wrd = 0;
+    return empty; // this should not happen
 }
 
 void set_reg_8(BYTE reg, BYTE val) {
@@ -470,8 +472,22 @@ int execute_opcode(BYTE op) {
             execute_ld_to_mem(addr, val);
             return 8;
         case 0x22 : // ldi HL, A
+            execute_ld_to_mem(reg_HL.wrd, reg_AF.hi);
+            reg_HL.wrd += 1;
+            return 8;
         case 0x2A : // ldi A, HL
+            val = read_memory(reg_HL.wrd);
+            execute_ld_to_reg(7, val);
+            reg_HL.wrd += 1;
+            return 8;
         case 0x32 : // ldd HL, A
+            execute_ld_to_mem(reg_HL.wrd, reg_AF.hi);
+            reg_HL.wrd -= 1;
+            return 8;
+        case 0x3A : // ldd A, HL
+            val = read_memory(reg_HL.wrd);
+            execute_ld_to_reg(7, val);
+            reg_HL.wrd -= 1;
             return 8;
 
         
