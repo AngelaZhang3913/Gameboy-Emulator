@@ -275,6 +275,13 @@ void execute_right_shift_rotate(BYTE reg_num, WORD addr, BYTE n, bool is_reg, BY
     else write_memory(addr, res);
 }
 
+void execute_swap(BYTE reg_num, WORD addr, BYTE n, bool is_reg) {
+    BYTE res = (n >> 4) | (n & 0b1111);
+    set_all_flags(res == 0, 0, 0, 0);
+    if(is_reg) set_reg_8(reg_num, res);
+    else write_memory(addr, res);
+}
+
 int execute_extended_opcode() {
     BYTE op = read_memory(program_counter); // = readmemory
     program_counter++;
@@ -303,6 +310,8 @@ int execute_extended_opcode() {
             execute_left_shift_rotate(0, reg_HL.wrd, val, false, 2);
             return 16;
         case 0x36 : // swap HL
+            val = read_memory(reg_HL.wrd);
+            execute_swap(0, reg_HL.wrd, val, false);
             return 16;
         case 0x2E : // sra HL
             val = read_memory(reg_HL.wrd);
@@ -341,6 +350,9 @@ int execute_extended_opcode() {
             execute_left_shift_rotate(reg_num, 0, val, true, 2);
             return 8;
         case 0b00110000 : // swap r
+            reg_num = op & 0b111;
+            val = get_reg_value(reg_num);
+            execute_swap(reg_num, 0, val, true);
             return 8;
         case 0b00101000 : // sra r
             reg_num = op & 0b111;
