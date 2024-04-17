@@ -19,6 +19,10 @@ int main(int argc, char const *argv[])
     result = read_memory(address + 2);
     printf("memory[address + 2]: %X\n", result);
     program_counter = address;
+    
+    execute_next_opcode();
+    print_result();
+    
     printf("%X\n", execute_opcode(read_memory(program_counter)));
     printf("result: %X\n", reg_AF.hi);
     printf("reg AF: %X\n", reg_AF.wrd);

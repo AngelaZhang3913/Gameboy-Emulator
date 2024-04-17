@@ -51,7 +51,7 @@ void render_screen() {
     
 }
 
-BYTE get_reg_value(BYTE bits) {
+BYTE get_reg_value_8(BYTE bits) {
     switch(bits) {
         case 7 : // A
             return reg_AF.hi;
@@ -73,20 +73,31 @@ BYTE get_reg_value(BYTE bits) {
     return 0;
 }
 
-Register get_register(BYTE bits) {
+BYTE get_reg_value_16(BYTE bits) {
+    switch(bits) {
+        case 0 : // BC
+            return reg_BC.wrd;
+        case 1 : // DE
+            return reg_DE.wrd;
+        case 2 : // HL
+            return reg_HL.wrd;
+        case 3 : // SP
+            return stack_pointer.wrd;
+    }
+}
+
+Register* get_register(BYTE bits) {
     switch (bits) {
         case 0:
-            return reg_BC;
+            return &reg_BC;
         case 1:
-            return reg_DE;
+            return &reg_DE;
         case 2:
-            return reg_HL;
+            return &reg_HL;
         case 3:
-            return stack_pointer;
+            return &stack_pointer;
     }
-    Register empty;
-    empty.wrd = 0;
-    return empty; // this should not happen
+    return 0;
 }
 
 void set_reg_8(BYTE reg, BYTE val) {
@@ -107,6 +118,19 @@ void set_reg_8(BYTE reg, BYTE val) {
             reg_HL.lo = val;
         case 6 : // HL
             reg_HL.wrd = val;
+    }
+}
+
+void set_reg_16(BYTE reg, WORD val) {
+    switch(reg) {
+        case 0 : // BC
+            reg_BC.wrd = val;
+        case 1 : // DE
+            reg_DE.wrd = val;
+        case 2 : // HL
+            reg_HL.wrd = val;
+        case 3 : // SP
+            stack_pointer.wrd = val;
     }
 }
 
@@ -138,16 +162,6 @@ void print_result() {
     printf("flag c: %d\n\n", get_flag(FLAG_C) );
 }
 
-// all load instructions that involve loading a value into a register, loads val into reg
-void execute_ld_to_reg(BYTE reg, BYTE val) {
-    set_reg_8(reg, val);
-}
-
-// all load instructions that involve loading a value into a memory address, loads val into mem[addr]
-void execute_ld_to_mem(WORD addr, BYTE val) {
-    write_memory(addr, val);
-}
-
 // for adding with registers and immediates (8 bit only)
 void execute_add(bool carry, BYTE n) {
     BYTE sum = reg_AF.hi + n;
@@ -159,10 +173,10 @@ void execute_add(bool carry, BYTE n) {
     reg_AF.hi = sum;
 }
 
-void execute_add_HL_rr(Register reg) {
-    WORD sum = reg_HL.wrd + reg.wrd;
-    int int_sum = reg_HL.wrd + reg.wrd;
-    WORD half_sum = (reg_HL.wrd & 0xfff) + (reg.wrd & 0xfff);
+void execute_add_HL_rr(Register* reg) {
+    WORD sum = reg_HL.wrd + (*reg).wrd;
+    int int_sum = reg_HL.wrd + (*reg).wrd;
+    WORD half_sum = (reg_HL.wrd & 0xfff) + ((*reg).wrd & 0xfff);
 
     set_all_flags(sum == 0, 0, half_sum > 0xfff, int_sum > 0xffff);
     reg_HL.wrd = sum;
@@ -213,8 +227,8 @@ void execute_inc(BYTE reg, BYTE n, WORD addr, bool isHL) {
     print_result();
 }
 
-void execute_inc_rr(Register reg) { // no flags need to be set off
-    reg.wrd += 1;
+void execute_inc_rr(Register* reg) { // no flags need to be set off
+    (*reg).wrd += 1;
 }
 
 void execute_dec(BYTE reg, BYTE n, WORD addr, bool isHL) {
@@ -227,8 +241,8 @@ void execute_dec(BYTE reg, BYTE n, WORD addr, bool isHL) {
     print_result();
 }
 
-void execute_dec_rr(Register reg) { // no flags need to be set off
-    reg.wrd -= 1;
+void execute_dec_rr(Register* reg) { // no flags need to be set off
+    (*reg).wrd -= 1;
 }
 
 void execute_daa() {
@@ -295,9 +309,9 @@ void execute_swap(BYTE reg_num, WORD addr, BYTE n, bool is_reg) {
 }
 
 int execute_extended_opcode() {
-    program_counter++; // moved this up, unsure
     BYTE op = read_memory(program_counter);
-    
+    program_counter++;
+
     BYTE val;
     BYTE reg_num;
     switch(op) {
@@ -338,42 +352,42 @@ int execute_extended_opcode() {
     switch(op & rotate_shift_mask) {
         case 0 : // rlc r
             reg_num = op & 0b111;
-            val = get_reg_value(reg_num);
+            val = get_reg_value_8(reg_num);
             execute_left_shift_rotate(reg_num, 0, val, true, 0);
             return 8;
         case 0b00010000 : // rl r
             reg_num = op & 0b111;
-            val = get_reg_value(reg_num);
+            val = get_reg_value_8(reg_num);
             execute_left_shift_rotate(reg_num, 0, val, true, 1);
             return 8;
         case 0b00001000 : // rrc r
             reg_num = op & 0b111;
-            val = get_reg_value(reg_num);
+            val = get_reg_value_8(reg_num);
             execute_right_shift_rotate(reg_num, 0, val, true, 0);
             return 8;
         case 0b00011000 : // rr r
             reg_num = op & 0b111;
-            val = get_reg_value(reg_num);
+            val = get_reg_value_8(reg_num);
             execute_right_shift_rotate(reg_num, 0, val, true, 1);
             return 8;
         case 0b00100000 : // sla r
             reg_num = op & 0b111;
-            val = get_reg_value(reg_num);
+            val = get_reg_value_8(reg_num);
             execute_left_shift_rotate(reg_num, 0, val, true, 2);
             return 8;
         case 0b00110000 : // swap r
             reg_num = op & 0b111;
-            val = get_reg_value(reg_num);
+            val = get_reg_value_8(reg_num);
             execute_swap(reg_num, 0, val, true);
             return 8;
         case 0b00101000 : // sra r
             reg_num = op & 0b111;
-            val = get_reg_value(reg_num);
+            val = get_reg_value_8(reg_num);
             execute_right_shift_rotate(reg_num, 0, val, true, 2);
             return 8;
         case 0b00111000 : // srl r
             reg_num = op & 0b111;
-            val = get_reg_value(reg_num);
+            val = get_reg_value_8(reg_num);
             execute_right_shift_rotate(reg_num, 0, val, true, 3);
             return 8;
     }
@@ -404,95 +418,97 @@ int execute_opcode(BYTE op) {
     BYTE first; // for two immediates 
     BYTE second; // for two immediates
     WORD addr; // combines the two immediates
+    WORD val_16;
     switch (op) {
         // 8 BIT LOAD (total 19)
         case 0xFA : // ld A, nn
-            program_counter++;
             first = read_memory(program_counter);
             program_counter++;
             second = read_memory(program_counter);
-            addr = (first << 2) & second;
+            program_counter++;
+            addr = (first << 8) & second;
             val = read_memory(addr);
-            execute_ld_to_reg(7, val); // loads to register A
+            set_reg_8(7, val); // loads to register A
             return 16;
         case 0xEA : // ld nn, A
-            program_counter++;
             first = read_memory(program_counter);
             program_counter++;
             second = read_memory(program_counter);
-            addr = (first << 2) & second;
-            val = get_reg_value(7);
-            execute_ld_to_mem(addr, val);
+            program_counter++;
+            addr = (first << 8) & second;
+            val = get_reg_value_8(7);
+            write_memory(addr, val);
             return 16;
         
         case 0x36 : // ld HL, n
-            program_counter++;
             val = read_memory(program_counter);
-            execute_ld_to_mem(reg_HL.wrd, val);
+            program_counter++;
+            write_memory(reg_HL.wrd, val);
             return 12;
         case 0xF0 : // ld A, FF00+n
-            program_counter++;
             second = read_memory(program_counter);
+            program_counter++;
             addr = 0xFF00 + second;
             val = read_memory(addr);
-            execute_ld_to_reg(7, val);
+            set_reg_8(7, val);
             return 12;
         case 0xE0 : // ld FF00+n, A
-            program_counter++;
             second = read_memory(program_counter);
+            program_counter++;
             addr = 0xFF00 + second;
-            val = get_reg_value(7);
-            execute_ld_to_mem(addr, val);
+            val = get_reg_value_8(7);
+            write_memory(addr, val);
             return 12;
 
         case 0x0A : // ld A, BC
             val = read_memory(reg_BC.wrd);
-            execute_ld_to_reg(7, val);
+            set_reg_8(7, val);
             return 8;
         case 0x1A : // ld A, DE        
             val = read_memory(reg_DE.wrd);
-            execute_ld_to_reg(7, val);
+            set_reg_8(7, val);
             return 8;
         case 0x02 : // ld BC, A
-            val = get_reg_value(7);
-            execute_ld_to_mem(reg_BC.wrd, val);
+            val = get_reg_value_8(7);
+            write_memory(reg_BC.wrd, val);
             return 8;
         case 0x12 : // ld DE, A
-            val = get_reg_value(7);
-            execute_ld_to_mem(reg_DE.wrd, val);
+            val = get_reg_value_8(7);
+            write_memory(reg_DE.wrd, val);
             return 8;
         case 0xF2 : // ld A, FF00+C
-            addr = 0xFF00 + get_reg_value(1); // 1 is C
+            addr = 0xFF00 + get_reg_value_8(1); // 1 is C
             val = read_memory(addr);
-            execute_ld_to_reg(7, val);
+            set_reg_8(7, val);
             return 8;
         case 0xE2 : // ld FF00+C, A
-            addr = 0xFF00 + get_reg_value(1); // 1 is C
-            val = get_reg_value(7);
-            execute_ld_to_mem(addr, val);
+            addr = 0xFF00 + get_reg_value_8(1); // 1 is C
+            val = get_reg_value_8(7);
+            write_memory(addr, val);
             return 8;
         case 0x22 : // ldi HL, A
-            execute_ld_to_mem(reg_HL.wrd, reg_AF.hi);
+            write_memory(reg_HL.wrd, reg_AF.hi);
             reg_HL.wrd += 1;
             return 8;
         case 0x2A : // ldi A, HL
             val = read_memory(reg_HL.wrd);
-            execute_ld_to_reg(7, val);
+            set_reg_8(7, val);
             reg_HL.wrd += 1;
             return 8;
         case 0x32 : // ldd HL, A
-            execute_ld_to_mem(reg_HL.wrd, reg_AF.hi);
+            write_memory(reg_HL.wrd, reg_AF.hi);
             reg_HL.wrd -= 1;
             return 8;
         case 0x3A : // ldd A, HL
             val = read_memory(reg_HL.wrd);
-            execute_ld_to_reg(7, val);
+            set_reg_8(7, val);
             reg_HL.wrd -= 1;
             return 8;
 
         
         // 16 BIT LOAD (total 4)
         case 0xF9 : // ld SP, HL
+            set_reg_16(3, reg_HL.wrd);
             return 8;
         
         /* 8 BIT ARITHMETIC/LOGICAL */
@@ -504,13 +520,13 @@ int execute_opcode(BYTE op) {
             return 4;
 
         case 0xC6 : // add A, n
-            program_counter++; // PROGRAM COUNTER NEEDS TO BE INCREMENTED HERE
             val = read_memory(program_counter);
+            program_counter++;
             execute_add(false, val);
             return 8;
         case 0xCE : // adc A, n
-            program_counter++;
             val = read_memory(program_counter);
+            program_counter++;
             execute_add(true, val);
             return 8;
         case 0x86 : // add A, HL
@@ -523,13 +539,13 @@ int execute_opcode(BYTE op) {
             return 8;
 
         case 0xD6 : // sub n
-            program_counter++;
             val = read_memory(program_counter);
+            program_counter++;
             execute_sub(false, val);
             return 8;
         case 0xDE : // sbc A
-            program_counter++;
             val = read_memory(program_counter);
+            program_counter++;
             execute_sub(true, val);
             return 8;
         case 0x96 : // sub HL
@@ -542,8 +558,8 @@ int execute_opcode(BYTE op) {
             return 8;
 
         case 0xE6 : // and n
-            program_counter++;
             val = read_memory(program_counter);
+            program_counter++;
             execute_and(val);
             return 8;
         case 0xA6 : // and HL
@@ -552,8 +568,8 @@ int execute_opcode(BYTE op) {
             return 8;
 
         case 0xEE : // xor n
-            program_counter++;
             val = read_memory(program_counter);
+            program_counter++;
             execute_xor(val);
             return 8;
         case 0xAE : // xor HL
@@ -562,8 +578,8 @@ int execute_opcode(BYTE op) {
             return 8;
 
         case 0xF6 : // or n
-            program_counter++;
             val = read_memory(program_counter);
+            program_counter++;
             execute_or(val);
             return 8;
         case 0xB6 : // or HL
@@ -572,8 +588,8 @@ int execute_opcode(BYTE op) {
             return 8;
         
         case 0xFE : // cp n
-            program_counter++;
             val = read_memory(program_counter);
+            program_counter++;
             execute_cp(val);
             return 8;
         case 0xBE : // cp HL
@@ -600,19 +616,19 @@ int execute_opcode(BYTE op) {
         // ROTATE AND SHIFT
         // 7 is the A register
         case 0x07 : // rlca
-            val = get_reg_value(7);
+            val = get_reg_value_8(7);
             execute_left_shift_rotate(7, 0, val, true, 0);
             return 4; 
         case 0x17 : // rla
-            val = get_reg_value(7);
+            val = get_reg_value_8(7);
             execute_left_shift_rotate(7, 0, val, true, 1);
             return 4;
         case 0x0F : // rrca
-            val = get_reg_value(7);
+            val = get_reg_value_8(7);
             execute_right_shift_rotate(7, 0, val, true, 0);
             return 4;
         case 0x1F : // rra
-            val = get_reg_value(7);
+            val = get_reg_value_8(7);
             execute_right_shift_rotate(7, 0, val, true, 1);
             return 4;
         
@@ -646,71 +662,92 @@ int execute_opcode(BYTE op) {
             return execute_extended_opcode();
     }
     if ((op & ld_r_r_mask) == 0b01000000) {
-        val = get_reg_value(op & 0b111);
+        val = get_reg_value_8(op & 0b111);
         reg_num = (op >> 3) & 0b111;
-        execute_ld_to_reg(reg_num, val);
+        set_reg_8(reg_num, val);
         return 4;
     } else if ((op & ld_r_n_mask) == 0b00000110) {
-        program_counter++;
         val = read_memory(program_counter);
+        program_counter++;
         reg_num = (op >> 3) & 0b111;
-        execute_ld_to_reg(reg_num, val);
+        set_reg_8(reg_num, val);
         return 8;
     } else if ((op & ld_r_hl_mask) == 0b01000110) {
         val = read_memory(reg_HL.wrd);
         reg_num = (op >> 3) & 0b111;
-        execute_ld_to_reg(reg_num, val);
+        set_reg_8(reg_num, val);
         return 8;
     } else if ((op & ld_hl_r_mask) == 0b01110000) {
-        val = get_reg_value(op & 0b111);
-        execute_ld_to_mem(reg_HL.wrd, val);
+        val = get_reg_value_8(op & 0b111);
+        set_reg_8(reg_HL.wrd, val);
         return 8;
     } else if ((op & ld_rr_nn_mask) == 0b00000001) {
+        first = read_memory(program_counter);
+        program_counter++;
+        second = read_memory(program_counter);
+        program_counter++;
+        val_16 = (first << 8) & second;
+        reg_num = (op >> 4) & 0b11;
+        set_reg_16(reg_num, val_16);
         return 12;
     } else if ((op & push_rr_mask) == 0b11000101) {
+        val_16 = get_reg_value_16((op >> 4) & 0b11);
+        val = val_16 >> 8;
+        stack_pointer.wrd--;
+        write_memory(stack_pointer.wrd, val);
+        stack_pointer.wrd--;
+        val = val_16 & 0xff;
+        write_memory(stack_pointer.wrd, val);
         return 16;
     } else if ((op & pop_rr_mask) == 0b11000001) {
+        second = read_memory(stack_pointer.wrd);
+        stack_pointer.wrd++;
+        first = read_memory(stack_pointer.wrd);
+        stack_pointer.wrd++;
+        val_16 = (first << 8) & second;
+        reg_num = (op >> 4) & 0b11;
+        set_reg_16(reg_num, val_16);
         return 12;
     } else if ((op & add_A_r_mask) == 0b10000000) {
-        val = get_reg_value(op & 0b111);
+        val = get_reg_value_8(op & 0b111);
         execute_add(false, val);
         return 4;
     } else if ((op & adc_A_r_mask) == 0b10001000) {
-        val = get_reg_value(op & 0b111);
+        val = get_reg_value_8(op & 0b111);
         execute_add(true, val);
         return 4;
     } else if ((op & sub_r_mask) == 0b10010000) {
-        val = get_reg_value(op & 0b111);
+        val = get_reg_value_8(op & 0b111);
         execute_sub(false, val);
         return 4;
     } else if ((op & sbc_A_r_mask) == 0b10011000) {
-        val = get_reg_value(op & 0b111);
+        val = get_reg_value_8(op & 0b111);
         execute_sub(true, val);
         return 4;
     } else if ((op & cp_r_mask) == 0b10111000) {
-        val = get_reg_value(op & 0b111);
+        val = get_reg_value_8(op & 0b111);
         execute_cp(val);
         return 4;
     } else if ((op & inc_r_mask) == 0b00000100) {
         reg_num = (op >> 3) & 0b111;
-        val = get_reg_value(reg_num);
+        val = get_reg_value_8(reg_num);
         execute_inc(reg_num, val, 0, false);
         return 4;
     } else if ((op & dec_r_mask) == 0b00000101) {
         reg_num = (op >> 3) & 0b111;
-        val = get_reg_value(reg_num);
+        val = get_reg_value_8(reg_num);
         execute_dec(reg_num, val, 0, false);
         return 4;
     } else if ((op & and_r_mask) == 0b10100000) {
-        val = get_reg_value(op & 0b111);
+        val = get_reg_value_8(op & 0b111);
         execute_and(val);
         return 4;
     } else if ((op & or_r_mask) == 0b10110000) {
-        val = get_reg_value(op & 0b111);
+        val = get_reg_value_8(op & 0b111);
         execute_or(val);
         return 4;
     } else if ((op & xor_r_mask) == 0b10101000) {
-        val = get_reg_value(op & 0b111);
+        val = get_reg_value_8(op & 0b111);
         execute_xor(val);
         return 4;
     } else if ((op & inc_rr_mask) == 0b000000011) {
