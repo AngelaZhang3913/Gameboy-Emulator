@@ -460,7 +460,15 @@ int execute_opcode(BYTE op) {
             execute_ld_to_mem(reg_DE.wrd, val);
             return 8;
         case 0xF2 : // ld A, FF00+C
+            addr = 0xFF00 + get_reg_value(1); // 1 is C
+            val = read_memory(addr);
+            execute_ld_to_reg(7, val);
+            return 8;
         case 0xE2 : // ld FF00+C, A
+            addr = 0xFF00 + get_reg_value(1); // 1 is C
+            val = get_reg_value(7);
+            execute_ld_to_mem(addr, val);
+            return 8;
         case 0x22 : // ldi HL, A
         case 0x2A : // ldi A, HL
         case 0x32 : // ldd HL, A
