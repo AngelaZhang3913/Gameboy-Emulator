@@ -250,51 +250,29 @@ void execute_cpl() {
     set_flag(FLAG_H, 1);
 }
 
-// rotate left circular for regs and memory
-void execute_rlc(BYTE reg_num, WORD addr, BYTE n, bool reg) {
-    int bit_7 = n >> 7;
-    BYTE res = (n << 1) + bit_7;
-    set_all_flags(res == 0, 0, 0, bit_7);
-
-    if(reg) set_reg_8(reg_num, res);
-    else write_memory(addr, res);
-}
-
-// rotate left for regs and memory
-void execute_rl(BYTE reg_num, WORD addr, BYTE n, bool reg) {
-    int bit_7 = n >> 7;
-    BYTE res = (n << 1) + get_flag(FLAG_C);
-    set_all_flags(res == 0, 0, 0, bit_7);
-
-    if(reg) set_reg_8(reg_num, res);
-    else write_memory(addr, res);
-}
-
-// rotate right circular
-void execute_rrc(BYTE reg_num, WORD addr, BYTE n, bool reg) {
-    int bit_0 = n & 1;
-    BYTE res = (n >> 1) + (bit_0 << 7);
-    set_all_flags(res == 0, 0, 0, bit_0);
-
-    if(reg) set_reg_8(reg_num, res);
-    else write_memory(addr, res);
-}
-
-// rotate right
-void execute_rr(BYTE reg_num, WORD addr, BYTE n, bool reg) {
-    int bit_0 = n & 1;
-    BYTE res = (n >> 1) + (get_flag(FLAG_C) << 7);
-    set_all_flags(res == 0, 0, 0, bit_0);
-
-    if(reg) set_reg_8(reg_num, res);
-    else write_memory(addr, res);
-}
-
-void execute_shift_left(BYTE reg) {
-    BYTE n = get_reg_value(reg);
+// left shifts and rotates
+void execute_left_shift_rotate(BYTE reg_num, WORD addr, BYTE n, bool is_reg, BYTE type) {
+    BYTE bit_7 = n >> 7;
     BYTE res = n << 1;
-    set_reg_8(reg, res);
-    set_flag(FLAG_Z, res == 0);
+    if(type == 0) res |= bit_7; // rotate circular
+    else if(type == 1) res |= get_flag(FLAG_C); // rotate
+    
+    set_all_flags(res == 0, 0, 0, bit_7);
+    if(is_reg) set_reg_8(reg_num, res);
+    else write_memory(addr, res);
+}
+
+// right shifts and rotates
+void execute_right_shift_rotate(BYTE reg_num, WORD addr, BYTE n, bool is_reg, BYTE type) {
+    BYTE bit_0 = n & 1;
+    BYTE res = n >> 1;
+    if(type == 0) res |= (bit_0 << 7); // rotate circular
+    else if(type == 1) res |= (get_flag(FLAG_C) << 7); // rotate
+    else if(type == 2) res |= n >> 7; // shift arithmetic
+    
+    set_all_flags(res == 0, 0, 0, bit_0);
+    if(is_reg) set_reg_8(reg_num, res);
+    else write_memory(addr, res);
 }
 
 int execute_extended_opcode() {
@@ -306,24 +284,33 @@ int execute_extended_opcode() {
     switch(op) {
         case 0x06 : // rlc HL
             val = read_memory(reg_HL.wrd);
-            execute_rlc(0, reg_HL.wrd, val, false);
+            execute_left_shift_rotate(0, reg_HL.wrd, val, false, 0);
             return 16;
         case 0x16 : // rl HL
             val = read_memory(reg_HL.wrd);
-            execute_rl(0, reg_HL.wrd, val, false);
+            execute_left_shift_rotate(0, reg_HL.wrd, val, false, 1);
             return 16;
         case 0x0E : // rrc HL
             val = read_memory(reg_HL.wrd);
-            execute_rrc(0, reg_HL.wrd, val, false);
+            execute_right_shift_rotate(0, reg_HL.wrd, val, false, 0);
             return 16;
         case 0x1E : // rr HL
             val = read_memory(reg_HL.wrd);
-            execute_rr(0, reg_HL.wrd, val, false);
+            execute_right_shift_rotate(0, reg_HL.wrd, val, false, 1);
             return 16;
-        case 0x26 : // sla HL
+        case 0x26 : // sla (HL)
+            val = read_memory(reg_HL.wrd);
+            execute_left_shift_rotate(0, reg_HL.wrd, val, false, 2);
+            return 16;
         case 0x36 : // swap HL
+            return 16;
         case 0x2E : // sra HL
+            val = read_memory(reg_HL.wrd);
+            execute_right_shift_rotate(0, reg_HL.wrd, val, false, 2);
+            return 16;
         case 0x3E : // srl HL
+            val = read_memory(reg_HL.wrd);
+            execute_right_shift_rotate(0, reg_HL.wrd, val, false, 3);
             return 16;
     }
 
@@ -331,30 +318,39 @@ int execute_extended_opcode() {
         case 0 : // rlc r
             reg_num = op & 0b111;
             val = get_reg_value(reg_num);
-            execute_rlc(reg_num, 0, val, true);
+            execute_left_shift_rotate(reg_num, 0, val, true, 0);
             return 8;
         case 0b00010000 : // rl r
             reg_num = op & 0b111;
             val = get_reg_value(reg_num);
-            execute_rl(reg_num, 0, val, true);
+            execute_left_shift_rotate(reg_num, 0, val, true, 1);
             return 8;
         case 0b00001000 : // rrc r
             reg_num = op & 0b111;
             val = get_reg_value(reg_num);
-            execute_rrc(reg_num, 0, val, true);
+            execute_right_shift_rotate(reg_num, 0, val, true, 0);
             return 8;
         case 0b00011000 : // rr r
             reg_num = op & 0b111;
             val = get_reg_value(reg_num);
-            execute_rr(reg_num, 0, val, true);
+            execute_right_shift_rotate(reg_num, 0, val, true, 1);
             return 8;
         case 0b00100000 : // sla r
             reg_num = op & 0b111;
-            execute_shift_left(reg_num);
+            val = get_reg_value(reg_num);
+            execute_left_shift_rotate(reg_num, 0, val, true, 2);
             return 8;
         case 0b00110000 : // swap r
+            return 8;
         case 0b00101000 : // sra r
+            reg_num = op & 0b111;
+            val = get_reg_value(reg_num);
+            execute_right_shift_rotate(reg_num, 0, val, true, 2);
+            return 8;
         case 0b00111000 : // srl r
+            reg_num = op & 0b111;
+            val = get_reg_value(reg_num);
+            execute_right_shift_rotate(reg_num, 0, val, true, 3);
             return 8;
     }
 
@@ -514,19 +510,19 @@ int execute_opcode(BYTE op) {
         // 7 is the A register
         case 0x07 : // rlca
             val = get_reg_value(7);
-            execute_rlc(7, 0, val, true);
+            execute_left_shift_rotate(7, 0, val, true, 0);
             return 4; 
         case 0x17 : // rla
             val = get_reg_value(7);
-            execute_rl(7, 0, val, true);
+            execute_left_shift_rotate(7, 0, val, true, 1);
             return 4;
         case 0x0F : // rrca
             val = get_reg_value(7);
-            execute_rrc(7, 0, val, true);
+            execute_right_shift_rotate(7, 0, val, true, 0);
             return 4;
         case 0x1F : // rra
             val = get_reg_value(7);
-            execute_rr(7, 0, val, true);
+            execute_right_shift_rotate(7, 0, val, true, 1);
             return 4;
         
         // CPU CONTROL
