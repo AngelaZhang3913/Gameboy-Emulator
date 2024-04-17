@@ -2,6 +2,21 @@
 
 int main(int argc, char const *argv[])
 {
+    // TESTING: adding using an immediate from memory (pg 80)
+    
+    // set a value in memory to be the opcode using write_memory
+    // set PC to that location in memory
+    // execute_opcode(read_memory(program_counter));
+
+
+    // TESTING: adding using a value from HL register (pg 80)
+    
+    // manually set the HL register to be equal to a memory address
+    // set that value in memory to be the correct value using write_memory
+    // execute_opcode(opcode);
+    
+    
+    
     reg_AF.wrd = 0x01B0;
     reg_BC.wrd = 0x0013;
     reg_DE.wrd = 0x00D8;
