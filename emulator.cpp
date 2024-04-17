@@ -200,6 +200,10 @@ void execute_inc(BYTE reg, BYTE n) {
     print_result();
 }
 
+void execute_inc_rr(Register reg) {
+    reg.wrd += 1;
+}
+
 void execute_dec(BYTE reg, BYTE n) {
     BYTE res = n - 1;
     set_flag(FLAG_Z, res == 0);
@@ -207,6 +211,10 @@ void execute_dec(BYTE reg, BYTE n) {
     set_flag(FLAG_H, (n & 0b1111) == 0);
     set_reg_8(reg, res);
     print_result();
+}
+
+void execute_dec_rr(Register reg) {
+    reg.wrd -= 1;
 }
 
 void execute_daa() {
@@ -603,8 +611,12 @@ int execute_opcode(BYTE op) {
         execute_xor(val);
         return 4;
     } else if ((op & inc_rr_mask) == 0b000000011) {
+        reg_num = (op >> 4) & 0b11;
+        execute_inc_rr(get_register(reg_num));
         return 8;
     } else if ((op & dec_rr_mask) == 0b00001011) {
+        reg_num = (op >> 4) & 0b11;
+        execute_dec_rr(get_register(reg_num));
         return 8;
     } else if ((op & add_HL_rr_mask) == 0b00001001) {
         reg_num = (op >> 4) & 0b11;
