@@ -25,13 +25,15 @@ int main(int argc, char const *argv[])
     // execute_opcode(0xA2); // and a, d -> a = 0
     // printf("A = %d\n", reg_AF.hi);
 
-    reg_AF.wrd = 0x0FB0;
+    reg_AF.wrd = 0x0EB0;
     reg_BC.wrd = 0x0013;
     reg_DE.wrd = 0x00D8;
     reg_HL.wrd = 0x014D;
-    execute_opcode(0x07);
+    //execute_opcode(0x07);
     // execute_opcode(0x17);
     // execute_opcode(0xCF);
+    //execute_opcode(0x1F);
+    execute_opcode(0x0F);
     
 
     return 0;

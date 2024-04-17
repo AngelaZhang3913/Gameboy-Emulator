@@ -28,7 +28,7 @@ void update_graphics(int cycles) {
             // reset scan line
             rom[0xFF44] = 0;
         } else if (current_scanline < 144) {
-            //draw_scanline(); // need to write
+            draw_scanline(); // need to write
         }
     }
 }
@@ -48,7 +48,24 @@ void update_graphics(int cycles) {
      - Bit 3: Mode 0 Interupt Enabled
      - Bit 4: Mode 1 Interupt Enabled
      - Bit 5: Mode 2 Interupt Enabled
+
+
     0xFF44 - current scan line
+
+     LCD Control Register - 0xFF40
+     Bit 7 - LCD Display Enable (0=Off, 1=On)
+        Bit 6 - Window Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
+        Bit 5 - Window Display Enable (0=Off, 1=On)
+        Bit 4 - BG & Window Tile Data Select (0=8800-97FF, 1=8000-8FFF)
+        Bit 3 - BG Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
+        Bit 2 - OBJ (Sprite) Size (0=8x8, 1=8x16)
+        Bit 1 - OBJ (Sprite) Display Enable (0=Off, 1=On)
+        Bit 0 - BG Display (for CGB see below) (0=Off, 1=On)
+
+    ScrollY (0xFF42): The Y Position of the BACKGROUND where to start drawing the viewing area from
+    ScrollX (0xFF43): The X Position of the BACKGROUND to start drawing the viewing area from
+    WindowY (0xFF4A): The Y Position of the VIEWING AREA to start drawing the window from
+    WindowX (0xFF4B): The X Positions -7 of the VIEWING AREA to start drawing the window from
 */
 
 void set_lcd_status() {
@@ -114,4 +131,23 @@ void set_lcd_status() {
 
 bool is_lcd_enabled() {
     return test_bit(read_memory(0xFF40), 7);
+}
+
+void draw_scanline() {
+    BYTE lcd_control_reg = read_memory(0xFF40);
+    if (test_bit(lcd_control_reg, 0)) {
+        render_tiles();
+    }
+
+    if (test_bit(lcd_control_reg, 1)) {
+        render_sprites();
+    }
+}
+
+void render_tiles() {
+
+}
+
+void render_sprites() {
+    
 }
