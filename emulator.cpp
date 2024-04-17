@@ -283,8 +283,8 @@ void execute_swap(BYTE reg_num, WORD addr, BYTE n, bool is_reg) {
 }
 
 int execute_extended_opcode() {
-    BYTE op = read_memory(program_counter); // = readmemory
-    program_counter++;
+    program_counter++; // moved this up, unsure
+    BYTE op = read_memory(program_counter);
     
     BYTE val;
     BYTE reg_num;
@@ -430,8 +430,8 @@ int execute_opcode(BYTE op) {
             execute_add(false, val);
             return 8;
         case 0xCE : // adc A, n
-            val = read_memory(program_counter);
             program_counter++;
+            val = read_memory(program_counter);
             execute_add(true, val);
             return 8;
         case 0x86 : // add A, HL
@@ -444,13 +444,13 @@ int execute_opcode(BYTE op) {
             return 8;
 
         case 0xD6 : // sub n
-            val = read_memory(program_counter);
             program_counter++;
+            val = read_memory(program_counter);
             execute_sub(false, val);
             return 8;
         case 0xDE : // sbc A
-            val = read_memory(program_counter);
             program_counter++;
+            val = read_memory(program_counter);
             execute_sub(true, val);
             return 8;
         case 0x96 : // sub HL
@@ -463,8 +463,8 @@ int execute_opcode(BYTE op) {
             return 8;
 
         case 0xE6 : // and n
-            val = read_memory(program_counter);
             program_counter++;
+            val = read_memory(program_counter);
             execute_and(val);
             return 8;
         case 0xA6 : // and HL
@@ -473,8 +473,8 @@ int execute_opcode(BYTE op) {
             return 8;
 
         case 0xEE : // xor n
-            val = read_memory(program_counter);
             program_counter++;
+            val = read_memory(program_counter);
             execute_xor(val);
             return 8;
         case 0xAE : // xor HL
@@ -483,8 +483,8 @@ int execute_opcode(BYTE op) {
             return 8;
 
         case 0xF6 : // or n
-            val = read_memory(program_counter);
             program_counter++;
+            val = read_memory(program_counter);
             execute_or(val);
             return 8;
         case 0xB6 : // or HL
@@ -493,8 +493,8 @@ int execute_opcode(BYTE op) {
             return 8;
         
         case 0xFE : // cp n
-            val = read_memory(program_counter);
             program_counter++;
+            val = read_memory(program_counter);
             execute_cp(val);
             return 8;
         case 0xBE : // cp HL
@@ -650,7 +650,7 @@ int execute_opcode(BYTE op) {
 
 int execute_next_opcode() {
     // returns the number of cycles for the instruction
-    BYTE opcode = 0; //= read_memory(program_counter);
+    BYTE opcode = read_memory(program_counter);
     program_counter++;
     return execute_opcode(opcode);
 }
