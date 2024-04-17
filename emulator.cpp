@@ -433,9 +433,21 @@ int execute_opcode(BYTE op) {
             return 12;
 
         case 0x0A : // ld A, BC
+            val = read_memory(reg_BC.wrd);
+            execute_ld_to_reg(7, val);
+            return 8;
         case 0x1A : // ld A, DE        
+            val = read_memory(reg_DE.wrd);
+            execute_ld_to_reg(7, val);
+            return 8;
         case 0x02 : // ld BC, A
+            val = get_reg_value(7);
+            execute_ld_to_mem(reg_BC.wrd, val);
+            return 8;
         case 0x12 : // ld DE, A
+            val = get_reg_value(7);
+            execute_ld_to_mem(reg_DE.wrd, val);
+            return 8;
         case 0xF2 : // ld A, FF00+C
         case 0xE2 : // ld FF00+C, A
         case 0x22 : // ldi HL, A
