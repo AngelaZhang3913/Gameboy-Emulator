@@ -136,9 +136,14 @@ void print_result() {
     printf("flag c: %d\n\n", get_flag(FLAG_C) );
 }
 
-// all load instructions that involved loading a value into a register, loads val into reg
+// all load instructions that involve loading a value into a register, loads val into reg
 void execute_ld_to_reg(BYTE reg, BYTE val) {
     set_reg_8(reg, val);
+}
+
+// all load instructions that involve loading a value into a memory address, loads val into mem[addr]
+void execute_ld_to_mem(WORD addr, BYTE val) {
+    write_memory(addr, val);
 }
 
 // for adding with registers and immediates (8 bit only)
@@ -394,13 +399,35 @@ int execute_opcode(BYTE op) {
 
     BYTE val;
     BYTE reg_num;
+    BYTE first; // for two immediates 
+    BYTE second; // for two immediates
+    WORD addr; // combines the two immediates
     switch (op) {
         // 8 BIT LOAD (total 19)
         case 0xFA : // ld A, nn
+            program_counter++;
+            first = read_memory(program_counter);
+            program_counter++;
+            second = read_memory(program_counter);
+            addr = (first << 2) & second;
+            val = read_memory(addr);
+            execute_ld_to_reg(7, val); // loads to register A
+            return 16;
         case 0xEA : // ld nn, A
+            program_counter++;
+            first = read_memory(program_counter);
+            program_counter++;
+            second = read_memory(program_counter);
+            addr = (first << 2) & second;
+            val = get_reg_value(7);
+            execute_ld_to_mem(addr, val);
             return 16;
         
         case 0x36 : // ld HL, n
+            program_counter++;
+            val = read_memory(program_counter);
+            execute_ld_to_mem(reg_HL.wrd, val);
+            return 12;
         case 0xF0 : // ld A, FF00+n
         case 0xE0 : // ld FF00+n, A
             return 12;
@@ -588,6 +615,8 @@ int execute_opcode(BYTE op) {
         execute_ld_to_reg(reg_num, val);
         return 8;
     } else if ((op & ld_hl_r_mask) == 0b01110000) {
+        val = get_reg_value(op & 0b111);
+        execute_ld_to_mem(reg_HL.wrd, val);
         return 8;
     } else if ((op & ld_rr_nn_mask) == 0b00000001) {
         return 12;
