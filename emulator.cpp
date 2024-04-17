@@ -191,29 +191,31 @@ void set_reg_8(BYTE reg, BYTE val) {
     }
 }
 
-void execute_inc(BYTE reg, BYTE n) {
+void execute_inc(BYTE reg, BYTE n, WORD addr, bool isHL) {
     BYTE res = n + 1;
     set_flag(FLAG_Z, res == 0);
     set_flag(FLAG_S, 0);
     set_flag(FLAG_H, (n & 0b1111) == 0xf);
-    set_reg_8(reg, res);
+    if (isHL) write_memory(addr, res);
+    else set_reg_8(reg, res);
     print_result();
 }
 
-void execute_inc_rr(Register reg) {
+void execute_inc_rr(Register reg) { // no flags need to be set off
     reg.wrd += 1;
 }
 
-void execute_dec(BYTE reg, BYTE n) {
+void execute_dec(BYTE reg, BYTE n, WORD addr, bool isHL) {
     BYTE res = n - 1;
     set_flag(FLAG_Z, res == 0);
     set_flag(FLAG_S, 0);
     set_flag(FLAG_H, (n & 0b1111) == 0);
-    set_reg_8(reg, res);
+    if (isHL) write_memory(addr, res);
+    else set_reg_8(reg, res);
     print_result();
 }
 
-void execute_dec_rr(Register reg) {
+void execute_dec_rr(Register reg) { // no flags need to be set off
     reg.wrd -= 1;
 }
 
@@ -493,10 +495,12 @@ int execute_opcode(BYTE op) {
             return 8;
 
         case 0x34 : // inc HL
-            // val = read_memory(reg_HL.wrd);
-            // execute_inc(val);
+            val = read_memory(reg_HL.wrd);
+            execute_inc(0, val, reg_HL.wrd, true);
             return 12;
         case 0x35 : // dec HL
+            val = read_memory(reg_HL.wrd);
+            execute_dec(0, val, reg_HL.wrd, true);
             return 12;
 
         // 16 BIT ARITHMETIC/LOGICAL
@@ -591,12 +595,12 @@ int execute_opcode(BYTE op) {
     } else if ((op & inc_r_mask) == 0b00000100) {
         reg_num = (op >> 3) & 0b111;
         val = get_reg_value(reg_num);
-        execute_inc(reg_num, val);
+        execute_inc(reg_num, val, 0, false);
         return 4;
     } else if ((op & dec_r_mask) == 0b00000101) {
         reg_num = (op >> 3) & 0b111;
         val = get_reg_value(reg_num);
-        execute_dec(reg_num, val);
+        execute_dec(reg_num, val, 0, false);
         return 4;
     } else if ((op & and_r_mask) == 0b10100000) {
         val = get_reg_value(op & 0b111);
