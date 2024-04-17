@@ -73,6 +73,20 @@ BYTE get_reg_value(BYTE bits) {
     return 0;
 }
 
+Register get_register(BYTE bits) {
+    switch (bits) {
+        case 0:
+            return reg_BC;
+        case 1:
+            return reg_DE;
+        case 2:
+            return reg_HL;
+        case 3:
+            return stack_pointer;
+    }
+    return reg_AF; // this should not happen, I can't figure out how to return null :(
+}
+
 BYTE get_bit(BYTE num, BYTE bit) {
     return (num & (1 << bit)) >> bit;
 }
@@ -110,6 +124,15 @@ void execute_add(bool carry, BYTE n) {
 
     set_all_flags(sum == 0, 0, half_sum > 0xf, int_sum > 0xff);
     reg_AF.hi = sum;
+}
+
+void execute_add_HL_rr(Register reg) {
+    WORD sum = reg_HL.wrd + reg.wrd;
+    int int_sum = reg_HL.wrd + reg.wrd;
+    WORD half_sum = (reg_HL.wrd & 0xfff) + (reg.wrd & 0xfff);
+
+    set_all_flags(sum == 0, 0, half_sum > 0xfff, int_sum > 0xffff);
+    reg_HL.wrd = sum;
 }
 
 void execute_sub(bool carry, BYTE n) {
@@ -562,7 +585,7 @@ int execute_opcode(BYTE op) {
         val = get_reg_value(reg_num);
         execute_inc(reg_num, val);
         return 4;
-    } else if ((op & dec_r_mask )== 0b00000101) {
+    } else if ((op & dec_r_mask) == 0b00000101) {
         reg_num = (op >> 3) & 0b111;
         val = get_reg_value(reg_num);
         execute_dec(reg_num, val);
@@ -584,6 +607,8 @@ int execute_opcode(BYTE op) {
     } else if ((op & dec_rr_mask) == 0b00001011) {
         return 8;
     } else if ((op & add_HL_rr_mask) == 0b00001001) {
+        reg_num = (op >> 4) & 0b11;
+        execute_add_HL_rr(get_register(reg_num));
         return 8;
     } else if ((op & jp_cc_nn_mask) == 0b11000010) {
         // return execute_jp_cc_nn(); 
