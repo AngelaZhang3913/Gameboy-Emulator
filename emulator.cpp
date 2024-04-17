@@ -87,6 +87,27 @@ Register get_register(BYTE bits) {
     return reg_AF; // this should not happen, I can't figure out how to return null :(
 }
 
+void set_reg_8(BYTE reg, BYTE val) {
+    switch(reg) {
+        case 7 : // A
+            reg_AF.hi = val;
+        case 0 : // B
+            reg_BC.hi = val;
+        case 1 : // C
+            reg_BC.lo = val;
+        case 2 : // D
+            reg_DE.hi = val;
+        case 3 : // E
+            reg_DE.lo = val;
+        case 4 : // H
+            reg_HL.hi = val;
+        case 5 : // L
+            reg_HL.lo = val;
+        case 6 : // HL
+            reg_HL.wrd = val;
+    }
+}
+
 BYTE get_bit(BYTE num, BYTE bit) {
     return (num & (1 << bit)) >> bit;
 }
@@ -113,6 +134,11 @@ void print_result() {
     printf("flag s: %d\n", get_flag(FLAG_S) );
     printf("flag h: %d\n", get_flag(FLAG_H) );
     printf("flag c: %d\n\n", get_flag(FLAG_C) );
+}
+
+// all load instructions that involved loading a value into a register, loads val into reg
+void execute_ld_to_reg(BYTE reg, BYTE val) {
+    set_reg_8(reg, val);
 }
 
 // for adding with registers and immediates (8 bit only)
@@ -168,27 +194,6 @@ void execute_cp(BYTE n) {
     BYTE bottomHalfA = reg_AF.hi & 0b1111;
     BYTE bottomHalfN = n & 0b1111;
     set_all_flags(diff == 0, 1, bottomHalfA < bottomHalfN, reg_AF.hi < n);
-}
-
-void set_reg_8(BYTE reg, BYTE val) {
-    switch(reg) {
-        case 7 : // A
-            reg_AF.hi = val;
-        case 0 : // B
-            reg_BC.hi = val;
-        case 1 : // C
-            reg_BC.lo = val;
-        case 2 : // D
-            reg_DE.hi = val;
-        case 3 : // E
-            reg_DE.lo = val;
-        case 4 : // H
-            reg_HL.hi = val;
-        case 5 : // L
-            reg_HL.lo = val;
-        case 6 : // HL
-            reg_HL.wrd = val;
-    }
 }
 
 void execute_inc(BYTE reg, BYTE n, WORD addr, bool isHL) {
@@ -567,10 +572,20 @@ int execute_opcode(BYTE op) {
             return execute_extended_opcode();
     }
     if ((op & ld_r_r_mask) == 0b01000000) {
+        val = get_reg_value(op & 0b111);
+        reg_num = (op >> 3) & 0b111;
+        execute_ld_to_reg(reg_num, val);
         return 4;
     } else if ((op & ld_r_n_mask) == 0b00000110) {
+        program_counter++;
+        val = read_memory(program_counter);
+        reg_num = (op >> 3) & 0b111;
+        execute_ld_to_reg(reg_num, val);
         return 8;
     } else if ((op & ld_r_hl_mask) == 0b01000110) {
+        val = read_memory(reg_HL.wrd);
+        reg_num = (op >> 3) & 0b111;
+        execute_ld_to_reg(reg_num, val);
         return 8;
     } else if ((op & ld_hl_r_mask) == 0b01110000) {
         return 8;
