@@ -417,8 +417,8 @@ int execute_opcode(BYTE op) {
             return 4;
 
         case 0xC6 : // add A, n
+            program_counter++; // PROGRAM COUNTER NEEDS TO BE INCREMENTED HERE
             val = read_memory(program_counter);
-            program_counter++;
             execute_add(false, val);
             return 8;
         case 0xCE : // adc A, n

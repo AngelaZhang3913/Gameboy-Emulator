@@ -72,7 +72,7 @@ void write_memory(WORD address, BYTE data) {
         if (enable_ram) {
             ram_banks[address - 0xA000 + (current_ram_bank*0x2000)] = data;
         }
-    } else if (address <= 0xE000 && address < 0xFE00) {
+    } else if (address >= 0xE000 && address < 0xFE00) {
         // echo RAM: also write in RAM section
         // don't need to implement
     } else if (address >= 0xFEA0 && address < 0xFEFF) {
