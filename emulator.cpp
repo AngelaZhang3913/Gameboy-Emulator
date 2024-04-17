@@ -608,9 +608,15 @@ int execute_opcode(BYTE op) {
 
         // 16 BIT ARITHMETIC/LOGICAL
         case 0xE8 : // add SP, dd
+            val = read_memory(program_counter);
+            program_counter++;
+            stack_pointer.wrd += val;
             return 16;
         
         case 0xF8 : // ld HL, SP+dd
+            val = read_memory(program_counter);
+            program_counter++;
+            reg_HL.wrd = stack_pointer.wrd + val;
             return 12;
         
         // ROTATE AND SHIFT
