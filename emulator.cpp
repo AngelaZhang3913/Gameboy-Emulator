@@ -86,81 +86,57 @@ void set_flag(BYTE bit_num, bool b) {
     else reg_AF.lo = reg_AF.lo & ~(1 << bit_num);
 }
 
+void set_all_flags(BYTE z, BYTE s, BYTE h, BYTE c) {
+    set_flag(FLAG_Z, z);
+    set_flag(FLAG_S, s);
+    set_flag(FLAG_H, h);
+    set_flag(FLAG_C, c);
+}
+
 void print_result() {
     printf("result = %d\n", reg_AF.hi);
     printf("flag z: %d\n", get_flag(FLAG_Z) );
     printf("flag s: %d\n", get_flag(FLAG_S) );
     printf("flag h: %d\n", get_flag(FLAG_H) );
-    printf("flag c: %d\n", get_flag(FLAG_C) );
+    printf("flag c: %d\n\n", get_flag(FLAG_C) );
 }
 
 // for adding with registers and immediates (8 bit only)
 void execute_add(bool carry, BYTE n) {
-    printf("A = %d\n", reg_AF.hi);
-    printf("n = %d\n", n);
     BYTE sum = reg_AF.hi + n;
     int int_sum = reg_AF.hi + n;
     if(carry) sum += get_flag(FLAG_C);
     BYTE half_sum = (reg_AF.hi & 0b1111) + (n & 0b1111);
-    printf("half sum = %d\n", half_sum);
 
-    // set flags
-    set_flag(FLAG_Z, sum == 0);
-    set_flag(FLAG_S, 0);
-    set_flag(FLAG_H, half_sum > 0xf);
-    set_flag(FLAG_C, int_sum > 0xff);
+    set_all_flags(sum == 0, 0, half_sum > 0xf, int_sum > 0xff);
     reg_AF.hi = sum;
-    print_result();
 }
 
 void execute_sub(bool carry, BYTE n) {
-    printf("A = %d\n", reg_AF.hi);
-    printf("n = %d\n", n);
     BYTE diff = reg_AF.hi - n;
     if(carry) diff -= get_flag(FLAG_C);
     BYTE bottomHalfA = reg_AF.hi & 0b1111;
     BYTE bottomHalfN = n & 0b1111;
-    
 
-    // set flags
-    set_flag(FLAG_Z, diff == 0);
-    set_flag(FLAG_S, 1);
-    // printf("reg_af half carry is 0: %d\n", (get_bit(reg_AF.hi, 3) == 0));
-    // printf("n half carry is 1: %d\n", (get_bit(n, 3) == 1));
-    set_flag(FLAG_H, bottomHalfA < bottomHalfN);
-    set_flag(FLAG_C, reg_AF.hi < n);
+    set_all_flags(diff == 0, 1, bottomHalfA < bottomHalfN, reg_AF.hi < n);
     reg_AF.hi = diff;
-    printf("diff = %d\n", reg_AF.hi);
-    printf("flag z: %d\n", get_flag(FLAG_Z) );
-    printf("flag s: %d\n", get_flag(FLAG_S) );
-    printf("flag h: %d\n", get_flag(FLAG_H) );
-    printf("flag c: %d\n", get_flag(FLAG_C) );
 }
 
 void execute_and(BYTE n) {
     BYTE res = reg_AF.hi & n;
-    set_flag(FLAG_Z, res == 0);
-    set_flag(FLAG_S, 0);
-    set_flag(FLAG_H, 0);
-    set_flag(FLAG_C, 0);
+    set_all_flags(res == 0, 0, 0, 0);
     reg_AF.hi = res;
 }
 
 void execute_xor(BYTE n) {
     BYTE res = reg_AF.hi ^ n;
-    set_flag(FLAG_Z, res == 0);
-    set_flag(FLAG_S, 0);
-    set_flag(FLAG_H, 0);
-    set_flag(FLAG_C, 0);
+    set_all_flags(res == 0, 0, 0, 0);
     reg_AF.hi = res;
 }
 
 void execute_or(BYTE n) {
     BYTE res = reg_AF.hi | n;
-    set_flag(FLAG_Z, res == 0);
-    set_flag(FLAG_S, 0);
-    set_flag(FLAG_H, 0);
-    set_flag(FLAG_C, 0);
+    set_all_flags(res == 0, 0, 0, 0);
     reg_AF.hi = res;
 }
 
@@ -168,13 +144,7 @@ void execute_cp(BYTE n) {
     BYTE diff = reg_AF.hi - n;
     BYTE bottomHalfA = reg_AF.hi & 0b1111;
     BYTE bottomHalfN = n & 0b1111;
-    
-
-    // set flags
-    set_flag(FLAG_Z, diff == 0);
-    set_flag(FLAG_S, 1);
-    set_flag(FLAG_H, bottomHalfA < bottomHalfN);
-    set_flag(FLAG_C, reg_AF.hi < n);
+    set_all_flags(diff == 0, 1, bottomHalfA < bottomHalfN, reg_AF.hi < n);
 }
 
 void set_reg_8(BYTE reg, BYTE val) {
@@ -247,109 +217,44 @@ void execute_cpl() {
     set_flag(FLAG_H, 1);
 }
 
-// rotate left circular
-void execute_rotate_left_circular(BYTE reg, BYTE n) {
+// rotate left circular for regs and memory
+void execute_rlc(BYTE reg_num, WORD addr, BYTE n, bool reg) {
     int bit_7 = n >> 7;
     BYTE res = (n << 1) + bit_7;
-    if (res == 0) {
-        set_flag(FLAG_Z, 1);
-    }
-    set_reg_8(reg, res);
-    set_flag(FLAG_S, 0);
-    set_flag(FLAG_H, 0);
-    set_flag(FLAG_C, bit_7);
-    print_result();
+    set_all_flags(res == 0, 0, 0, bit_7);
+
+    if(reg) set_reg_8(reg_num, res);
+    else write_memory(addr, res);
 }
 
-void execute_rlc_HL(WORD addr, BYTE n) {
-    int bit_7 = n >> 7;
-    BYTE res = (n << 1) + bit_7;
-    if (res == 0) {
-        set_flag(FLAG_Z, 1);
-    }
-    write_memory(addr, res);
-    set_flag(FLAG_S, 0);
-    set_flag(FLAG_H, 0);
-    set_flag(FLAG_C, bit_7);
-}
-
-// rotate left
-void execute_rotate_left(BYTE reg, BYTE n) {
-    int bit_7 = n >> 7;
-    printf("%d\n", get_flag(FLAG_C));
-    BYTE res = (n << 1) + get_flag(FLAG_C);
-    if (res == 0) {
-        set_flag(FLAG_Z, 1);
-    } 
-    set_reg_8(reg, res);
-    set_flag(FLAG_S, 0);
-    set_flag(FLAG_H, 0);
-    set_flag(FLAG_C, bit_7);
-    print_result();
-}
-
-void execute_rl_HL(WORD addr, BYTE n) {
+// rotate left for regs and memory
+void execute_rl(BYTE reg_num, WORD addr, BYTE n, bool reg) {
     int bit_7 = n >> 7;
     BYTE res = (n << 1) + get_flag(FLAG_C);
-    if (res == 0) {
-        set_flag(FLAG_Z, 1);
-    } 
-    write_memory(addr, res);
-    set_flag(FLAG_S, 0);
-    set_flag(FLAG_H, 0);
-    set_flag(FLAG_C, bit_7);
+    set_all_flags(res == 0, 0, 0, bit_7);
+
+    if(reg) set_reg_8(reg_num, res);
+    else write_memory(addr, res);
 }
 
 // rotate right circular
-void execute_rotate_right_circular(BYTE reg, BYTE n) {
+void execute_rrc(BYTE reg_num, WORD addr, BYTE n, bool reg) {
     int bit_0 = n & 1;
     BYTE res = (n >> 1) + (bit_0 << 7);
-    if (res == 0) {
-        set_flag(FLAG_Z, 1);
-    } 
-    set_reg_8(reg, res);
-    set_flag(FLAG_S, 0);
-    set_flag(FLAG_H, 0);
-    set_flag(FLAG_C, bit_0);
-    print_result();
-}
+    set_all_flags(res == 0, 0, 0, bit_0);
 
-void execute_rrc_HL(WORD addr, BYTE n) {
-    int bit_0 = n & 1;
-    BYTE res = (n >> 1) + (bit_0 << 7);
-    if (res == 0) {
-        set_flag(FLAG_Z, 1);
-    } 
-    write_memory(addr, res);
-    set_flag(FLAG_S, 0);
-    set_flag(FLAG_H, 0);
-    set_flag(FLAG_C, bit_0);
+    if(reg) set_reg_8(reg_num, res);
+    else write_memory(addr, res);
 }
 
 // rotate right
-void execute_rotate_right(BYTE reg, BYTE n) {
+void execute_rr(BYTE reg_num, WORD addr, BYTE n, bool reg) {
     int bit_0 = n & 1;
     BYTE res = (n >> 1) + (get_flag(FLAG_C) << 7);
-    if (res == 0) {
-        set_flag(FLAG_Z, 1);
-    } 
-    set_reg_8(reg, res);
-    set_flag(FLAG_S, 0);
-    set_flag(FLAG_H, 0);
-    set_flag(FLAG_C, bit_0);
-    print_result();
-}
+    set_all_flags(res == 0, 0, 0, bit_0);
 
-void execute_rr_HL(WORD addr, BYTE n) {
-    int bit_0 = n & 1;
-    BYTE res = (n >> 1) + (get_flag(FLAG_C) << 7);
-    if (res == 0) {
-        set_flag(FLAG_Z, 1);
-    } 
-    write_memory(addr, res);
-    set_flag(FLAG_S, 0);
-    set_flag(FLAG_H, 0);
-    set_flag(FLAG_C, bit_0);
+    if(reg) set_reg_8(reg_num, res);
+    else write_memory(addr, res);
 }
 
 void execute_shift_left(BYTE reg) {
@@ -368,19 +273,19 @@ int execute_extended_opcode() {
     switch(op) {
         case 0x06 : // rlc HL
             val = read_memory(reg_HL.wrd);
-            execute_rlc_HL(reg_HL.wrd, val);
+            execute_rlc(0, reg_HL.wrd, val, false);
             return 16;
         case 0x16 : // rl HL
             val = read_memory(reg_HL.wrd);
-            execute_rl_HL(reg_HL.wrd, val);
+            execute_rl(0, reg_HL.wrd, val, false);
             return 16;
         case 0x0E : // rrc HL
             val = read_memory(reg_HL.wrd);
-            execute_rrc_HL(reg_HL.wrd, val);
+            execute_rrc(0, reg_HL.wrd, val, false);
             return 16;
         case 0x1E : // rr HL
             val = read_memory(reg_HL.wrd);
-            execute_rr_HL(reg_HL.wrd, val);
+            execute_rr(0, reg_HL.wrd, val, false);
             return 16;
         case 0x26 : // sla HL
         case 0x36 : // swap HL
@@ -393,22 +298,22 @@ int execute_extended_opcode() {
         case 0 : // rlc r
             reg_num = op & 0b111;
             val = get_reg_value(reg_num);
-            execute_rotate_left_circular(reg_num, val);
+            execute_rlc(reg_num, 0, val, true);
             return 8;
         case 0b00010000 : // rl r
             reg_num = op & 0b111;
             val = get_reg_value(reg_num);
-            execute_rotate_left(reg_num, val);
+            execute_rl(reg_num, 0, val, true);
             return 8;
         case 0b00001000 : // rrc r
             reg_num = op & 0b111;
             val = get_reg_value(reg_num);
-            execute_rotate_right_circular(reg_num, val);
+            execute_rrc(reg_num, 0, val, true);
             return 8;
         case 0b00011000 : // rr r
             reg_num = op & 0b111;
             val = get_reg_value(reg_num);
-            execute_rotate_right(reg_num, val);
+            execute_rr(reg_num, 0, val, true);
             return 8;
         case 0b00100000 : // sla r
             reg_num = op & 0b111;
@@ -563,30 +468,30 @@ int execute_opcode(BYTE op) {
         case 0x35 : // dec HL
             return 12;
 
-        // 16 BIT ARITHMETIC/LOGICAL (total 5)
+        // 16 BIT ARITHMETIC/LOGICAL
         case 0xE8 : // add SP, dd
             return 16;
         
         case 0xF8 : // ld HL, SP+dd
             return 12;
         
-        // ROTATE AND SHIFT (total 20)
+        // ROTATE AND SHIFT
         // 7 is the A register
         case 0x07 : // rlca
             val = get_reg_value(7);
-            execute_rotate_left_circular(7, val);
+            execute_rlc(7, 0, val, true);
             return 4; 
         case 0x17 : // rla
             val = get_reg_value(7);
-            execute_rotate_left(7, val);
+            execute_rl(7, 0, val, true);
             return 4;
         case 0x0F : // rrca
             val = get_reg_value(7);
-            execute_rotate_right_circular(7, val);
+            execute_rrc(7, 0, val, true);
             return 4;
         case 0x1F : // rra
             val = get_reg_value(7);
-            execute_rotate_right(7, val);
+            execute_rr(7, 0, val, true);
             return 4;
         
         // CPU CONTROL
