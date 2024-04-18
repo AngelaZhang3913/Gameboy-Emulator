@@ -31,7 +31,26 @@ void sevice_interrupt(int id) {
     request = bitset(request, id);
     write_memory(0xFF0F, request);
 
-    // push PC onto stack to save execution address
-    // based on PC's current value, can determine what kind
-    // of interrupt service routine it is
+    // save PC to the stack
+    push_word_onto_stack(program_counter);
+    if (id == 0x40) {
+        // V-blank
+    }
+    if (id == 0x48) {
+        // LCD
+    }
+    if (id == 0x50) {
+        // Timer
+    }
+    if (id == 0x60) {
+        // Joypad
+    }
+}
+
+void push_word_onto_stack(WORD wrd) {
+    stack_pointer.wrd -= 1;
+    write_memory(stack_pointer.wrd, wrd >> 8); // the higher bits
+    
+    stack_pointer.wrd -= 1;
+    write_memory(stack_pointer.wrd, wrd & 0xFF); // the lower bits
 }

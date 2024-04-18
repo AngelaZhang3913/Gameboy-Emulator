@@ -1,5 +1,3 @@
-// IGNORE THIS PUSH
-
 #include "hardware.h"
 #include "timer.h"
 #include <cstring>
@@ -94,7 +92,7 @@ void write_memory(WORD address, BYTE data) {
         // can't write to scan line memory address
         rom[address] = 0 ;
     } else if (address == 0xFF46) {
-        //dma_transfer(data);
+        dma_transfer(data);
     } else {
         // no restriction
         rom[address] = data;
@@ -117,10 +115,12 @@ BYTE read_memory(WORD address) {
     }
 }
 
-/*
-// direct memory access
-dma_transfer(BYTE data) {
-    WORD source_address = data << 8;
 
+// direct memory access
+void dma_transfer(BYTE data) {
+    WORD source_address = data << 8;
+    // copies the memory from the source address into 0xFE00-0xFE9F
+    for (int i = 0x0; i < 0xA0; i++) {
+        write_memory(0xFE00 + i, read_memory(source_address + i));
+    }
 }
-*/

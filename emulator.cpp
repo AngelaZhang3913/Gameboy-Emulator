@@ -104,20 +104,28 @@ void set_reg_8(BYTE reg, BYTE val) {
     switch(reg) {
         case 7 : // A
             reg_AF.hi = val;
+            break;
         case 0 : // B
             reg_BC.hi = val;
+            break;
         case 1 : // C
             reg_BC.lo = val;
+            break;
         case 2 : // D
             reg_DE.hi = val;
+            break;
         case 3 : // E
             reg_DE.lo = val;
+            break;
         case 4 : // H
             reg_HL.hi = val;
+            break;
         case 5 : // L
             reg_HL.lo = val;
+            break;
         case 6 : // HL
             reg_HL.wrd = val;
+            break;
     }
 }
 
@@ -125,12 +133,16 @@ void set_reg_16(BYTE reg, WORD val) {
     switch(reg) {
         case 0 : // BC
             reg_BC.wrd = val;
+            break;
         case 1 : // DE
             reg_DE.wrd = val;
+            break;
         case 2 : // HL
             reg_HL.wrd = val;
+            break;
         case 3 : // SP
             stack_pointer.wrd = val;
+            break;
     }
 }
 
@@ -308,6 +320,25 @@ void execute_swap(BYTE reg_num, WORD addr, BYTE n, bool is_reg) {
     else write_memory(addr, res);
 }
 
+void execute_bit(BYTE val, BYTE bit_num) {
+    BYTE res = (val >> bit_num) & 0b1;
+    set_flag(FLAG_Z, res == 0);
+    set_flag(FLAG_S, 0);
+    set_flag(FLAG_H, 1);
+}
+
+void execute_reset(BYTE reg_num, WORD addr, BYTE val, BYTE bit_num, bool is_reg) {
+    BYTE res = val & ~(1 << bit_num);
+    if (is_reg) set_reg_8(reg_num, res);
+    else write_memory(addr, res);
+}
+
+void execute_set(BYTE reg_num, WORD addr, BYTE val, BYTE bit_num, bool is_reg) {
+    BYTE res = val | (1 << bit_num);
+    if(is_reg) set_reg_8(reg_num, res);
+    else write_memory(addr, res);
+}
+
 int execute_extended_opcode() {
     BYTE op = read_memory(program_counter);
     program_counter++;
@@ -392,19 +423,37 @@ int execute_extended_opcode() {
             return 8;
     }
 
-    switch(op & bit_mask_1) {
-        case 0b01000000 : // bit b r
-        case 0b10000000 : // res b r
-        case 0b11000000 : // set b r
-            return 8;
-    }
-
     switch(op & bit_mask_2) {
         case 0b01000110 : // bit b HL
+            val = (op >> 3) & 0b111;
+            execute_bit(read_memory(reg_HL.wrd), val);
             return 12;
         case 0b10000110 : // res b HL
-        case 0b11000110 : // set b HL
+            val = (op >> 3) & 0b111;
+            execute_reset(0, reg_HL.wrd, read_memory(reg_HL.wrd), val, false);
             return 16;
+        case 0b11000110 : // set b HL
+            val = (op >> 3) & 0b111;
+            execute_set(0, reg_HL.wrd, read_memory(reg_HL.wrd), val, false);
+            return 16;
+    }
+
+    switch(op & bit_mask_1) {
+        case 0b01000000 : // bit b r
+            reg_num = op  & 0b111;
+            val = (op >> 3) & 0b111;
+            execute_bit(get_reg_value_8(reg_num), val);
+            return 8;
+        case 0b10000000 : // res b r
+            reg_num = op & 0b111;
+            val = (op >> 3) & 0b111;
+            execute_reset(reg_num, 0, get_reg_value_8(reg_num), val, true);
+            return 8;
+        case 0b11000000 : // set b r
+            reg_num = op & 0b111;
+            val = (op >> 3) & 0b111;
+            execute_reset(reg_num, 0, get_reg_value_8(reg_num), val, true);
+            return 8;
     }
 
     return 0;
