@@ -1,4 +1,5 @@
 #include "emulator.h"
+#include "interrupts.h"
 
 // opcode masks (only the ones with varying bits)
 // GMB 8 bit-load commands
@@ -42,6 +43,8 @@ BYTE jr_cc_e_mask = 0b11100111;
 BYTE call_cc_nn_mask = 0b11100111;
 BYTE ret_cc_mask = 0b11100111;
 BYTE rst_n_mask = 0b11000111;
+
+bool halt = false;
 
 void execute_interrupts() {
 
@@ -337,6 +340,20 @@ void execute_set(BYTE reg_num, WORD addr, BYTE val, BYTE bit_num, bool is_reg) {
     BYTE res = val | (1 << bit_num);
     if(is_reg) set_reg_8(reg_num, res);
     else write_memory(addr, res);
+}
+
+bool check_flag(BYTE val) {
+    switch(val) {
+        case 0 :
+            return !get_flag(FLAG_Z);
+        case 1 :
+            return get_flag(FLAG_Z);
+        case 2 :
+            return !get_flag(FLAG_C);
+        case 3 : 
+            return get_flag(FLAG_C);
+    }
+    return 0;
 }
 
 int execute_extended_opcode() {
@@ -689,28 +706,62 @@ int execute_opcode(BYTE op) {
         
         // CPU CONTROL
         case 0x3F : // ccf
+            set_flag(FLAG_C, ~get_flag(FLAG_C));
+            return ;
         case 0x37 : // scf
+            set_flag(FLAG_C, 1);
+            return 4;
         case 0x00 : // nop
+            return 4;
         case 0xF3 : // di
+            
         case 0xFB : // ei
             return 4;
             
-        // case 0x76 : // halt
-        // case 0x10 00 : // stop
+        case 0x76 : // halt
+            halt = true;
+            return 4;
+        //case 0x10 00 : // stop
 
         // JUMP COMMANDS
         case 0xC3 : // jp nn
+            first = read_memory(program_counter);
+            program_counter++;
+            second = read_memory(program_counter);
+            program_counter++;
+            addr = (first << 8) & second;
+            program_counter = addr;
+            return 12;
         case 0xC9 : // ret
-        case 0xD9 : // resti
+            addr = pop_word_from_stack();
+            program_counter = addr;
+            return 16;
+        case 0xD9 : // reti
+            addr = pop_word_from_stack();
+            program_counter = addr;
+            // enable interrupts
             return 16;
         
         case 0xE9 : // jp HL
+            program_counter = reg_HL.wrd;
             return 4;
 
         case 0x18 : // jr PC+dd
+            val = read_memory(program_counter);
+            program_counter++;
+            program_counter += val;
             return 12;
 
         case 0xCD : // call nn
+            first = read_memory(program_counter);
+            program_counter++;
+            second = read_memory(program_counter);
+            program_counter++;
+            addr = (first << 8) & second;
+            // pushes next instruction address onto stack
+            push_word_onto_stack(program_counter);
+            // jumps to address at nn
+            program_counter = addr;
             return 24;
         
         case 0xCB : 
@@ -747,19 +798,10 @@ int execute_opcode(BYTE op) {
         return 12;
     } else if ((op & push_rr_mask) == 0b11000101) {
         val_16 = get_reg_value_16((op >> 4) & 0b11);
-        val = val_16 >> 8;
-        stack_pointer.wrd--;
-        write_memory(stack_pointer.wrd, val);
-        stack_pointer.wrd--;
-        val = val_16 & 0xff;
-        write_memory(stack_pointer.wrd, val);
+        push_word_onto_stack(val_16);
         return 16;
     } else if ((op & pop_rr_mask) == 0b11000001) {
-        second = read_memory(stack_pointer.wrd);
-        stack_pointer.wrd++;
-        first = read_memory(stack_pointer.wrd);
-        stack_pointer.wrd++;
-        val_16 = (first << 8) & second;
+        val_16 = pop_word_from_stack();
         reg_num = (op >> 4) & 0b11;
         set_reg_16(reg_num, val_16);
         return 12;
@@ -818,14 +860,56 @@ int execute_opcode(BYTE op) {
         execute_add_HL_rr(get_register(reg_num));
         return 8;
     } else if ((op & jp_cc_nn_mask) == 0b11000010) {
-        // return execute_jp_cc_nn(); 
+        val = (op >> 3) & 0b11;
+        first = read_memory(program_counter);
+        program_counter++;
+        second = read_memory(program_counter);
+        program_counter++;
+        addr = (first << 8) & second;
+        if (check_flag(val)) {
+            program_counter = addr;
+            return 16;
+        } else {
+            return 12;
+        }
     } else if ((op & jr_cc_e_mask) == 0b00100000) {
-        // return execute_jr_cc_e();
+        val = (op >> 3) & 0b11;
+        second = read_memory(program_counter);
+        program_counter++;
+        addr = program_counter + second;
+        if (check_flag(val)) {
+            program_counter = addr;
+            return 12; 
+        } else {
+            return 8;
+        }
     } else if ((op & call_cc_nn_mask) == 0b11000100) {
-        // return execute_call_cc_nn();
+        val = (op >> 3) & 0b11;
+        first = read_memory(program_counter);
+        program_counter++;
+        second = read_memory(program_counter);
+        program_counter++;
+        addr = (first << 8) & second;
+        if (check_flag(val)) {
+            push_word_onto_stack(program_counter);
+            program_counter = addr;
+            return 24;
+        } else {
+            return 12;
+        }
     } else if ((op & ret_cc_mask) == 0b11000000) {
-        // return execute_ret_cc();
+        val = (op >> 3) & 0b11;
+        if (check_flag(val)) {
+            addr = pop_word_from_stack();
+            program_counter = addr;
+            return 20;
+        } else {
+            return 8;
+        }
     } else if ((op & rst_n_mask) == 0b11000111) {
+        push_word_onto_stack(program_counter);
+        val = (op >> 3) & 0b111;
+        program_counter = val;
         return 16;
     }
     return 0;
@@ -833,9 +917,12 @@ int execute_opcode(BYTE op) {
 
 int execute_next_opcode() {
     // returns the number of cycles for the instruction
-    BYTE opcode = read_memory(program_counter);
-    program_counter++;
-    return execute_opcode(opcode);
+    if(!halt) {
+        BYTE opcode = read_memory(program_counter);
+        program_counter++;
+        return execute_opcode(opcode);
+    }
+    return 0;
 }
 
 void update() {

@@ -54,3 +54,11 @@ void push_word_onto_stack(WORD wrd) {
     stack_pointer.wrd -= 1;
     write_memory(stack_pointer.wrd, wrd & 0xFF); // the lower bits
 }
+
+WORD pop_word_from_stack() {
+    BYTE second = read_memory(stack_pointer.wrd);
+    stack_pointer.wrd++;
+    BYTE first = read_memory(stack_pointer.wrd);
+    stack_pointer.wrd++;
+    return (first << 8) & second;
+}
