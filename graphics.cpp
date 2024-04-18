@@ -266,6 +266,21 @@ void render_sprites() {
 }
 
 COLOR get_color(BYTE num_color, WORD address) {
-    COLOR color = WHITE;
-    return color;
+    BYTE palette = read_memory(address);
+    int bit1 = num_color == 0 ? 1:
+               num_color == 1 ? 3:
+               num_color == 2 ? 5:
+               7;
+
+    int bit2 = num_color == 0 ? 0:
+               num_color == 1 ? 2:
+               num_color == 2 ? 4:
+               6;
+
+    int color_val = (get_bit(palette, bit1) << 1) | get_bit(palette, bit2);
+
+    return  color_val == 1 ? LIGHT_GREY :
+            color_val == 2 ? DARK_GREY :
+            color_val == 3 ? BLACK :
+            WHITE;
 }
