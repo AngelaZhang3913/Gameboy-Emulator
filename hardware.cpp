@@ -1,5 +1,3 @@
-// IGNORE THIS PUSH
-
 #include "hardware.h"
 #include "timer.h"
 #include <cstring>
