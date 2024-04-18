@@ -2,7 +2,16 @@
 #include "hardware.h"
 #include "interrupts.h"
 
+enum COLOR { WHITE, LIGHT_GREY, DARK_GREY, BLACK};
+
 int scanline_counter = 0; // when to move on to the next line
+const WORD memory_region = 0x8800 ;
+const int tile_size = 16 ;
+const int offset = 128 ;
+
+int tile_indentifier = 0;
+
+WORD tile_address = memory_region + ((tile_indentifier+offset)*tile_size) ;
 
 void update_graphics(int cycles) {
     set_lcd_status();
@@ -66,6 +75,24 @@ void update_graphics(int cycles) {
     ScrollX (0xFF43): The X Position of the BACKGROUND to start drawing the viewing area from
     WindowY (0xFF4A): The Y Position of the VIEWING AREA to start drawing the window from
     WindowX (0xFF4B): The X Positions -7 of the VIEWING AREA to start drawing the window from
+
+    pixel# = 1 2 3 4 5 6 7 8
+    data 2 = 1 0 1 0 1 1 1 0
+    data 1 = 0 0 1 1 0 1 0 1
+
+    Pixel 1 colour id: 10
+    Pixel 2 colour id: 00
+    Pixel 3 colour id: 11
+    Pixel 4 colour id: 01
+    Pixel 5 colour id: 10
+    Pixel 6 colour id: 11
+    Pixel 7 colour id: 10
+    Pixel 8 colour id: 01
+
+    00: White
+    01: Light Grey
+    10: Dark Grey
+    11: Black
 */
 
 void set_lcd_status() {
@@ -136,7 +163,7 @@ bool is_lcd_enabled() {
 void draw_scanline() {
     BYTE lcd_control_reg = read_memory(0xFF40);
     if (test_bit(lcd_control_reg, 0)) {
-        render_tiles();
+        render_tiles(lcd_control_reg);
     }
 
     if (test_bit(lcd_control_reg, 1)) {
@@ -144,10 +171,101 @@ void draw_scanline() {
     }
 }
 
-void render_tiles() {
+void render_tiles(BYTE lcd_control_reg) {
+    WORD tile_data = 0 ;
+    WORD background_memory = 0 ;
+    bool unsign = true ;
 
+    BYTE scrollY = read_memory(0xFF42) ;
+    BYTE scrollX = read_memory(0xFF43) ;
+    BYTE windowY = read_memory(0xFF4A) ;
+    BYTE windowX = read_memory(0xFF4B) - 7;
+
+    bool in_window = false;
+
+    if (test_bit(lcd_control_reg, 5)) {
+        // check that the window is enabled
+        if (windowY <= read_memory(0xFF44)) {
+            // check that the current scan line is within the window
+            in_window = true ;
+        }
+    }
+
+    // choose where the tile data is from
+    if (test_bit(lcd_control_reg, 4)) {
+        tile_data = 0x8000;
+    } else {
+        tile_data = 0x8800 ;
+        unsign = false ;
+    }
+
+    // set the background memory
+    if (!in_window) {
+        background_memory = test_bit(lcd_control_reg, 3) ? 0x9C00 : 0x9800;
+    } else {
+        background_memory = test_bit(lcd_control_reg, 6) ? 0x9C00 : 0x9800;
+    }
+
+    BYTE y_position = in_window ? read_memory(0xFF44) - windowY : scrollY + read_memory(0xFF44);
+
+    WORD tile_row = (((BYTE)(y_position/8))*32) ;
+
+    // draw pixels for this scanline
+    for (int x = 0 ; x < 160; x++) {
+        BYTE x_position = x + scrollX ;
+
+        // translate the current x pos to window space if necessary
+        if (in_window) {
+            if (x >= windowX) {
+                x_position = x - windowX ;
+            }
+        }
+
+        // determine which tile this pixel is in
+        WORD tile_col = (x_position/8) ;
+        WORD tile_address = background_memory + tile_row + tile_col;      
+        SIGNED_WORD tile_num = unsign ? (BYTE)read_memory(tile_address) : (SIGNED_BYTE) read_memory(tile_address);
+
+        WORD tile_location = unsign ? tile_data + tile_num * 16 : tile_data + (tile_num + 128) * 16;
+
+        // determine the vertical location (each vertical line )
+        BYTE line = (y_position % 8) * 2;
+        BYTE data1 = read_memory(tile_location + line);
+        BYTE data2 = read_memory(tile_location + line + 1);
+
+        // pixel 0 = bit 7, pixel 1 = bit 6
+        int color_bit = (x_position % 8 - 7) * -1 ;
+        int color_value = (get_bit(data2, color_bit) << 1) | get_bit(data1, color_bit);
+
+        COLOR color = get_color(color_value, 0xFF47) ;
+        int red = color == WHITE ? 255 :
+                  color == LIGHT_GREY ? 0xCC :
+                  color == DARK_GREY ? 0x77 :
+                  0;
+        int green = color == WHITE ? 255 :
+                  color == LIGHT_GREY ? 0xCC :
+                  color == DARK_GREY ? 0x77 :
+                  0;
+        int blue = color == WHITE ? 255 :
+                  color == LIGHT_GREY ? 0xCC :
+                  color == DARK_GREY ? 0x77 :
+                  0;
+
+        int y = read_memory(0xFF44);
+
+        if ((y >= 0) && (y < 144) && (x >= 0) && (x < 160)) {
+            screen_data[x][y][0] = red ;
+            screen_data[x][y][1] = green ;
+            screen_data[x][y][2] = blue ;
+        }
+    }
 }
 
 void render_sprites() {
-    
+
+}
+
+COLOR get_color(BYTE num_color, WORD address) {
+    COLOR color = WHITE;
+    return color;
 }

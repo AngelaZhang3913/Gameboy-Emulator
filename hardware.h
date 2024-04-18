@@ -1,6 +1,7 @@
 #pragma once
 #include <stdio.h>
 #include "typedef.h"
+#include "bitmath.h"
 
 /* -------------
     REGISTERS
@@ -77,6 +78,8 @@ bool test_bit(BYTE byte, int index) ;
 extern bool enable_ram;
 
 extern bool rom_banking;
+
+extern BYTE screen_data[160][144][3] ;
 
 // basic internal game memory
 extern BYTE game_memory[0x80000]; // don't know if this actually works
