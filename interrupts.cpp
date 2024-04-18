@@ -48,9 +48,9 @@ void sevice_interrupt(int id) {
 }
 
 void push_word_onto_stack(WORD wrd) {
-    stack_pointer.wrd = stack_pointer.wrd - 0x1;
-    write_memory(stack_pointer.wrd, wrd & 0xFF00); // the higher bits
+    stack_pointer.wrd -= 1;
+    write_memory(stack_pointer.wrd, wrd >> 8); // the higher bits
     
-    stack_pointer.wrd = stack_pointer.wrd - 0x1;
+    stack_pointer.wrd -= 1;
     write_memory(stack_pointer.wrd, wrd & 0xFF); // the lower bits
 }
