@@ -79,8 +79,6 @@ extern bool enable_ram;
 
 extern bool rom_banking;
 
-extern BYTE screen_data[160][144][3] ;
-
 // basic internal game memory
 extern BYTE game_memory[0x80000]; // don't know if this actually works
 

@@ -13,34 +13,7 @@ int tile_indentifier = 0;
 
 WORD tile_address = memory_region + ((tile_indentifier+offset)*tile_size) ;
 
-void update_graphics(int cycles) {
-    set_lcd_status();
-
-    // check if lcd is enabled
-    if (is_lcd_enabled()) {
-        scanline_counter -= cycles;
-    } else {
-        return;
-    }
-
-    if (scanline_counter <= 0) {
-        // move on to the next scan line
-
-        scanline_counter = 456;
-        rom[0xFF44]++; // current scan line is stored in 0xFF44
-        BYTE current_scanline = read_memory(0xFF44);
-
-        if (current_scanline == 144) {
-            // vertical blank
-            request_interrupt(0);
-        } else if (current_scanline >= 153) {
-            // reset scan line
-            rom[0xFF44] = 0;
-        } else if (current_scanline < 144) {
-            draw_scanline(); // need to write
-        }
-    }
-}
+BYTE screen_data[160][144][3] ;
 
 /*
     00: H-Blank
@@ -160,15 +133,24 @@ bool is_lcd_enabled() {
     return test_bit(read_memory(0xFF40), 7);
 }
 
-void draw_scanline() {
-    BYTE lcd_control_reg = read_memory(0xFF40);
-    if (test_bit(lcd_control_reg, 0)) {
-        render_tiles(lcd_control_reg);
-    }
+COLOR get_color(BYTE num_color, WORD address) {
+    BYTE palette = read_memory(address);
+    int bit1 = num_color == 0 ? 1:
+               num_color == 1 ? 3:
+               num_color == 2 ? 5:
+               7;
 
-    if (test_bit(lcd_control_reg, 1)) {
-        render_sprites();
-    }
+    int bit2 = num_color == 0 ? 0:
+               num_color == 1 ? 2:
+               num_color == 2 ? 4:
+               6;
+
+    int color_val = (get_bit(palette, bit1) << 1) | get_bit(palette, bit2);
+
+    return  color_val == 1 ? LIGHT_GREY :
+            color_val == 2 ? DARK_GREY :
+            color_val == 3 ? BLACK :
+            WHITE;
 }
 
 void render_tiles(BYTE lcd_control_reg) {
@@ -233,7 +215,7 @@ void render_tiles(BYTE lcd_control_reg) {
         BYTE data1 = read_memory(tile_location + line);
         BYTE data2 = read_memory(tile_location + line + 1);
 
-        // pixel 0 = bit 7, pixel 1 = bit 6
+        // pixel 0 = bit 7, pixel 1 = bit 6, etc
         int color_bit = (x_position % 8 - 7) * -1 ;
         int color_value = (get_bit(data2, color_bit) << 1) | get_bit(data1, color_bit);
 
@@ -261,26 +243,135 @@ void render_tiles(BYTE lcd_control_reg) {
     }
 }
 
-void render_sprites() {
+void render_sprites(BYTE lcd_control_reg) {
 
+    for (int sprite = 0 ; sprite < 40; sprite++) {
+
+        /*
+        4 bytes of sprite attributes
+        0: Sprite Y Position: Position of the sprite on the Y axis of the viewing display minus 16
+        1: Sprite X Position: Position of the sprite on the X axis of the viewing display minus 8
+        2: Pattern number: This is the sprite identifier used for looking up the sprite data in memory region 0x8000-0x8FFF
+        3: Attributes: These are the attributes of the sprite, discussed later.
+        */
+
+        BYTE index = sprite * 4 ;
+        BYTE yPos = read_memory(0xFE00 + index) - 16;
+        BYTE xPos = read_memory(0xFE00 + index + 1) - 8;
+        BYTE tileLocation = read_memory(0xFE00 + index + 2) ;
+        BYTE attributes = read_memory(0xFE00 + index + 3) ;
+
+        /*
+        sprite attribute:
+            Bit7: Sprite to Background Priority
+            Bit6: Y flip - used to turn characters upside down
+            Bit5: X flip - used to turn characters horizontally
+            Bit4: Palette number
+            Bit3: Not used in standard gameboy
+            Bit2-0: Not used in standard gameboy
+        */
+
+        bool yFlip = test_bit(attributes, 6) ;
+        bool xFlip = test_bit(attributes, 5) ;
+
+        int scanline = read_memory(0xFF44);
+        int y_size = test_bit(lcd_control_reg, 2) ? 16 : 8; // Bit 2 - OBJ (Sprite) Size (0=8x8, 1=8x16)
+
+        // check if the sprite intercepts with scanline (should we draw)
+        if ((scanline >= yPos) && (scanline < (yPos + y_size))) {
+            int line = scanline - yPos ;
+            if (yFlip) {
+                line -= y_size ;
+                line *= -1 ;
+            }
+
+            line *= 2; // same as for tiles
+            WORD dataAddress = (0x8000 + (tileLocation * 16)) + line ;
+            BYTE data1 = read_memory(dataAddress) ;
+            BYTE data2 = read_memory(dataAddress + 1) ;
+
+            for (int tilePixel = 7; tilePixel >= 0; tilePixel--) {
+                int colorbit = tilePixel ;
+
+                if (xFlip) {
+                    colorbit -= 7 ;
+                    colorbit *= -1 ;
+                }
+
+                int color_value = (get_bit(data2, colorbit) << 1) | get_bit(data1, colorbit);
+                WORD color_address = test_bit(attributes, 4) ? 0xFF49 : 0xFF48 ;
+                COLOR color = get_color(color_value, color_address) ;
+
+                // white is transparent for sprites.
+                if (color == WHITE) {
+                    continue ;
+                }
+
+                int red =   color == WHITE ? 255 :
+                            color == LIGHT_GREY ? 0xCC :
+                            color == DARK_GREY ? 0x77 :
+                            0;
+                int green = color == WHITE ? 255 :
+                            color == LIGHT_GREY ? 0xCC :
+                            color == DARK_GREY ? 0x77 :
+                            0;
+                int blue =  color == WHITE ? 255 :
+                            color == LIGHT_GREY ? 0xCC :
+                            color == DARK_GREY ? 0x77 :
+                            0;
+
+                int x = xPos + 7 - tilePixel;
+
+                // check in bounds
+                int y = scanline;
+                if ((y >= 0) && (y < 144) && (x >= 0) && (x < 160)) {
+                    continue ;
+                }
+
+                screen_data[x][y][0] = red ;
+                screen_data[x][y][1] = green ;
+                screen_data[x][y][2] = blue ;
+            }
+        }
+    }
 }
 
-COLOR get_color(BYTE num_color, WORD address) {
-    BYTE palette = read_memory(address);
-    int bit1 = num_color == 0 ? 1:
-               num_color == 1 ? 3:
-               num_color == 2 ? 5:
-               7;
+void draw_scanline() {
+    BYTE lcd_control_reg = read_memory(0xFF40);
+    if (test_bit(lcd_control_reg, 0)) {
+        render_tiles(lcd_control_reg);
+    }
 
-    int bit2 = num_color == 0 ? 0:
-               num_color == 1 ? 2:
-               num_color == 2 ? 4:
-               6;
+    if (test_bit(lcd_control_reg, 1)) {
+        render_sprites(lcd_control_reg);
+    }
+}
 
-    int color_val = (get_bit(palette, bit1) << 1) | get_bit(palette, bit2);
+void update_graphics(int cycles) {
+    set_lcd_status();
 
-    return  color_val == 1 ? LIGHT_GREY :
-            color_val == 2 ? DARK_GREY :
-            color_val == 3 ? BLACK :
-            WHITE;
+    // check if lcd is enabled
+    if (is_lcd_enabled()) {
+        scanline_counter -= cycles;
+    } else {
+        return;
+    }
+
+    if (scanline_counter <= 0) {
+        // move on to the next scan line
+
+        scanline_counter = 456;
+        rom[0xFF44]++; // current scan line is stored in 0xFF44
+        BYTE current_scanline = read_memory(0xFF44);
+
+        if (current_scanline == 144) {
+            // vertical blank
+            request_interrupt(0);
+        } else if (current_scanline >= 153) {
+            // reset scan line
+            rom[0xFF44] = 0;
+        } else if (current_scanline < 144) {
+            draw_scanline(); // need to write
+        }
+    }
 }

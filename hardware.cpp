@@ -24,8 +24,6 @@ BYTE game_memory[0x80000];
 bool enable_ram;
 bool rom_banking;
 
-BYTE screen_data[160][144][3] ;
-
 /* -------------
      MEMORY
  ------------- */
