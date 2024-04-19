@@ -830,7 +830,13 @@ int execute_opcode(BYTE op) {
         case 0xCB : 
             return execute_extended_opcode();
     }
-    if ((op & ld_r_r_mask) == 0b01000000) {
+
+    if ((op & ld_r_hl_mask) == 0b01000110) {
+        val = read_memory(reg_HL.wrd);
+        reg_num = (op >> 3) & 0b111;
+        set_reg_8(reg_num, val);
+        return 8;
+    } else if ((op & ld_r_r_mask) == 0b01000000) {
         val = get_reg_value_8(op & 0b111);
         reg_num = (op >> 3) & 0b111;
         set_reg_8(reg_num, val);
@@ -838,11 +844,6 @@ int execute_opcode(BYTE op) {
     } else if ((op & ld_r_n_mask) == 0b00000110) {
         val = read_memory(program_counter);
         program_counter++;
-        reg_num = (op >> 3) & 0b111;
-        set_reg_8(reg_num, val);
-        return 8;
-    } else if ((op & ld_r_hl_mask) == 0b01000110) {
-        val = read_memory(reg_HL.wrd);
         reg_num = (op >> 3) & 0b111;
         set_reg_8(reg_num, val);
         return 8;
