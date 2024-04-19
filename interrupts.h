@@ -10,4 +10,4 @@ extern void push_word_onto_stack(WORD wrd);
 
 extern WORD pop_word_from_stack();
 
-bool interrupt_switch;
+extern bool interrupt_switch;

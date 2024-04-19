@@ -87,6 +87,7 @@ BYTE get_reg_value_16(BYTE bits) {
         case 3 : // SP
             return stack_pointer.wrd;
     }
+    return 0;
 }
 
 Register* get_register(BYTE bits) {
@@ -301,6 +302,7 @@ void execute_left_shift_rotate(BYTE reg_num, WORD addr, BYTE n, bool is_reg, BYT
     set_all_flags(res == 0, 0, 0, bit_7);
     if(is_reg) set_reg_8(reg_num, res);
     else write_memory(addr, res);
+    print_result();
 }
 
 // right shifts and rotates
@@ -707,14 +709,13 @@ int execute_opcode(BYTE op) {
         // CPU CONTROL
         case 0x3F : // ccf
             set_flag(FLAG_C, ~get_flag(FLAG_C));
-            return ;
+            return 4;
         case 0x37 : // scf
             set_flag(FLAG_C, 1);
             return 4;
         case 0x00 : // nop
             return 4;
         case 0xF3 : // di
-            
         case 0xFB : // ei
             return 4;
             

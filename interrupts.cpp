@@ -1,6 +1,8 @@
 #include "interrupts.h"
 #include "hardware.h"
 
+bool interrupt_switch;
+
 void request_interrupt(int id) {
     // add comments
     BYTE request = read_memory(0xFF0F);

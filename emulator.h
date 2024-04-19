@@ -4,3 +4,4 @@
 
 extern int execute_opcode(BYTE op);
 extern void print_result();
+extern int execute_next_opcode();

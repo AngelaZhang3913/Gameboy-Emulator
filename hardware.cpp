@@ -60,6 +60,31 @@ void handle_banking(WORD address, BYTE data) {
     }
 }
 
+void initialize_ram_bank() {
+    memset(&ram_banks, 0, sizeof(ram_banks));
+}
+
+BYTE read_memory(WORD address) {
+    if ((address >= 0x4000) && (address <= 0x7FFF)) {
+        // rom banking
+        return cartridge_memory[address - 0x4000 + current_rom_bank * 0x4000];
+    } else if ((address >= 0xA000) && (address <= 0xBFFF)){
+        // ram banking
+        return ram_banks[address - 0xA000 + current_ram_bank * 0x4000];
+    } else {
+        return rom[address];
+    }
+}
+
+
+// direct memory access
+void dma_transfer(BYTE data) {
+    WORD source_address = data << 8;
+    // copies the memory from the source address into 0xFE00-0xFE9F
+    for (int i = 0x0; i < 0xA0; i++) {
+        write_memory(0xFE00 + i, read_memory(source_address + i));
+    }
+}
 
 void write_memory(WORD address, BYTE data) {
     if (address < 0x8000) {
@@ -96,31 +121,5 @@ void write_memory(WORD address, BYTE data) {
     } else {
         // no restriction
         rom[address] = data;
-    }
-}
-
-void initialize_ram_bank() {
-    memset(&ram_banks, 0, sizeof(ram_banks));
-}
-
-BYTE read_memory(WORD address) {
-    if ((address >= 0x4000) && (address <= 0x7FFF)) {
-        // rom banking
-        return cartridge_memory[address - 0x4000 + current_rom_bank * 0x4000];
-    } else if ((address >= 0xA000) && (address <= 0xBFFF)){
-        // ram banking
-        return ram_banks[address - 0xA000 + current_ram_bank * 0x4000];
-    } else {
-        return rom[address];
-    }
-}
-
-
-// direct memory access
-void dma_transfer(BYTE data) {
-    WORD source_address = data << 8;
-    // copies the memory from the source address into 0xFE00-0xFE9F
-    for (int i = 0x0; i < 0xA0; i++) {
-        write_memory(0xFE00 + i, read_memory(source_address + i));
     }
 }
