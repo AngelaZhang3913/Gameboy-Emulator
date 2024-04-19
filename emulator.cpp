@@ -178,6 +178,67 @@ void print_result() {
     printf("flag c: %d\n\n", get_flag(FLAG_C) );
 }
 
+void print_result_regs(BYTE bits) {
+    switch(bits) {
+        case 7 : // A
+            printf("result = %d\n", reg_AF.hi);
+            printf("flag z: %d\n", get_flag(FLAG_Z) );
+            printf("flag s: %d\n", get_flag(FLAG_S) );
+            printf("flag h: %d\n", get_flag(FLAG_H) );
+            printf("flag c: %d\n\n", get_flag(FLAG_C) );
+            break;
+        case 0 : // B
+            printf("result = %d\n", reg_BC.hi);
+            printf("flag z: %d\n", get_flag(FLAG_Z) );
+            printf("flag s: %d\n", get_flag(FLAG_S) );
+            printf("flag h: %d\n", get_flag(FLAG_H) );
+            printf("flag c: %d\n\n", get_flag(FLAG_C) );
+            break;
+        case 1 : // C
+            printf("result = %d\n", reg_BC.lo);
+            printf("flag z: %d\n", get_flag(FLAG_Z) );
+            printf("flag s: %d\n", get_flag(FLAG_S) );
+            printf("flag h: %d\n", get_flag(FLAG_H) );
+            printf("flag c: %d\n\n", get_flag(FLAG_C) );
+            break;
+        case 2 : // D
+            printf("result = %d\n", reg_DE.hi);
+            printf("flag z: %d\n", get_flag(FLAG_Z) );
+            printf("flag s: %d\n", get_flag(FLAG_S) );
+            printf("flag h: %d\n", get_flag(FLAG_H) );
+            printf("flag c: %d\n\n", get_flag(FLAG_C) );
+            break;
+        case 3 : // E
+            printf("result = %d\n", reg_DE.lo);
+            printf("flag z: %d\n", get_flag(FLAG_Z) );
+            printf("flag s: %d\n", get_flag(FLAG_S) );
+            printf("flag h: %d\n", get_flag(FLAG_H) );
+            printf("flag c: %d\n\n", get_flag(FLAG_C) );
+            break;
+        case 4 : // H
+            printf("result = %d\n", reg_HL.hi);
+            printf("flag z: %d\n", get_flag(FLAG_Z) );
+            printf("flag s: %d\n", get_flag(FLAG_S) );
+            printf("flag h: %d\n", get_flag(FLAG_H) );
+            printf("flag c: %d\n\n", get_flag(FLAG_C) );
+            break;
+        case 5 : // L
+            printf("result = %d\n", reg_HL.lo);
+            printf("flag z: %d\n", get_flag(FLAG_Z) );
+            printf("flag s: %d\n", get_flag(FLAG_S) );
+            printf("flag h: %d\n", get_flag(FLAG_H) );
+            printf("flag c: %d\n\n", get_flag(FLAG_C) );
+            break;
+        case 6 : // HL
+            printf("result = %d\n", reg_HL.wrd);
+            printf("flag z: %d\n", get_flag(FLAG_Z) );
+            printf("flag s: %d\n", get_flag(FLAG_S) );
+            printf("flag h: %d\n", get_flag(FLAG_H) );
+            printf("flag c: %d\n\n", get_flag(FLAG_C) );
+            break;
+    }    
+}
+
 // for adding with registers and immediates (8 bit only)
 void execute_add(bool carry, BYTE n) {
     BYTE sum = reg_AF.hi + n;
@@ -316,6 +377,7 @@ void execute_right_shift_rotate(BYTE reg_num, WORD addr, BYTE n, bool is_reg, BY
     set_all_flags(res == 0, 0, 0, bit_0);
     if(is_reg) set_reg_8(reg_num, res);
     else write_memory(addr, res);
+    print_result();
 }
 
 void execute_swap(BYTE reg_num, WORD addr, BYTE n, bool is_reg) {
