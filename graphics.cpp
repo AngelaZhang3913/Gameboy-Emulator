@@ -381,12 +381,12 @@ void update_graphics(int cycles) {
     }
 }
 
-void display() {
-    glClear(GL_COLOR_BUFFER_BIT);
-    glDrawPixels(WIDTH, HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, screen_data);
-    glutSwapBuffers(); 
-}
+// void display() {
+//     glClear(GL_COLOR_BUFFER_BIT);
+//     glDrawPixels(WIDTH, HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, screen_data);
+//     glutSwapBuffers(); 
+// }
 
 void render_screen() {
-    glutDisplayFunc(display);
+    // glutDisplayFunc(display);
 }
