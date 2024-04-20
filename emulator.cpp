@@ -555,7 +555,7 @@ int execute_opcode(BYTE op) {
             program_counter++;
             second = read_memory(program_counter);
             program_counter++;
-            addr = (second << 8) & first;
+            addr = (second << 8) | first;
             val = read_memory(addr);
             set_reg_8(7, val); // loads to register A
             return 16;
@@ -564,7 +564,7 @@ int execute_opcode(BYTE op) {
             program_counter++;
             second = read_memory(program_counter);
             program_counter++;
-            addr = (second << 8) & first;
+            addr = (second << 8) | first;
             val = get_reg_value_8(7);
             write_memory(addr, val);
             return 16;
@@ -798,7 +798,7 @@ int execute_opcode(BYTE op) {
             program_counter++;
             second = read_memory(program_counter);
             program_counter++;
-            addr = (second << 8) & first;
+            addr = (second << 8) | first;
             program_counter = addr;
             return 12;
         case 0xC9 : // ret
@@ -826,7 +826,7 @@ int execute_opcode(BYTE op) {
             program_counter++;
             second = read_memory(program_counter);
             program_counter++;
-            addr = (second << 8) & first;
+            addr = (second << 8) | first;
             // pushes next instruction address onto stack
             push_word_onto_stack(program_counter);
             // jumps to address at nn
@@ -862,7 +862,7 @@ int execute_opcode(BYTE op) {
         program_counter++;
         second = read_memory(program_counter);
         program_counter++;
-        val_16 = (second << 8) & first;
+        val_16 = (second << 8) | first;
         reg_num = (op >> 4) & 0b11;
         set_reg_16(reg_num, val_16);
         return 12;
@@ -935,7 +935,7 @@ int execute_opcode(BYTE op) {
         program_counter++;
         second = read_memory(program_counter);
         program_counter++;
-        addr = (second << 8) & first;
+        addr = (second << 8) | first;
         if (check_flag(val)) {
             program_counter = addr;
             return 16;
@@ -959,7 +959,7 @@ int execute_opcode(BYTE op) {
         program_counter++;
         second = read_memory(program_counter);
         program_counter++;
-        addr = (second << 8) & first;
+        addr = (second << 8) | first;
         if (check_flag(val)) {
             push_word_onto_stack(program_counter);
             program_counter = addr;
