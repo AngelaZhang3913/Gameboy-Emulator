@@ -764,7 +764,7 @@ int execute_opcode(BYTE op) {
         
         // CPU CONTROL
         case 0x3F : // ccf
-            set_flag(FLAG_C, ~get_flag(FLAG_C));
+            set_flag(FLAG_C, !get_flag(FLAG_C));
             return 4;
         case 0x37 : // scf
             set_flag(FLAG_C, 1);
