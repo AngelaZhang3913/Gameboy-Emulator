@@ -1,6 +1,8 @@
 #include "typedef.h"
 #include "hardware.h"
 #include "interrupts.h"
+#include <glut/glut.h>
+#include "graphics.h"
 
 enum COLOR { WHITE, LIGHT_GREY, DARK_GREY, BLACK};
 
@@ -374,4 +376,14 @@ void update_graphics(int cycles) {
             draw_scanline(); // need to write
         }
     }
+}
+
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDrawPixels(WIDTH, HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, screen_data);
+    glutSwapBuffers(); 
+}
+
+void render_screen() {
+    glutDisplayFunc(display);
 }
