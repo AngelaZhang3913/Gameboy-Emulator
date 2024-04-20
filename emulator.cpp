@@ -167,7 +167,7 @@ void set_all_flags(BYTE z, BYTE s, BYTE h, BYTE c) {
 }
 
 void print_result() {
-    printf("result = %d\n", reg_AF.hi);
+    printf("result = %x\n", reg_AF.hi);
     printf("flag z: %d\n", get_flag(FLAG_Z) );
     printf("flag s: %d\n", get_flag(FLAG_S) );
     printf("flag h: %d\n", get_flag(FLAG_H) );
@@ -323,7 +323,8 @@ void execute_daa() {
         if ((reg_AF.hi & 0b1111) > 0x9) {
             int_res += 0x6;
             reg_AF.hi += 0x6;
-        } else if (reg_AF.hi > 0x99) {
+        }
+        if (reg_AF.hi > 0x99) {
             int_res += 0x60;
             reg_AF.hi += 0x60;
         }
