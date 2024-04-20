@@ -9,3 +9,5 @@ extern int execute_next_opcode();
 // for control of DE/IE instructions
 int intrpt_next_inst = -1;
 extern bool en_interrupt;
+
+extern void update();

@@ -1,5 +1,6 @@
 #include "emulator.h"
 #include "interrupts.h"
+#include "graphics.h"
 
 // opcode masks (only the ones with varying bits)
 // GMB 8 bit-load commands
@@ -45,14 +46,6 @@ BYTE ret_cc_mask = 0b11100111;
 BYTE rst_n_mask = 0b11000111;
 
 bool halt = false;
-
-void execute_interrupts() {
-
-}
-
-void render_screen() {
-    
-}
 
 BYTE get_reg_value_8(BYTE bits) {
     switch(bits) {
@@ -1022,7 +1015,7 @@ void update() {
         int new_cycles = execute_next_opcode();
         current_cycle += new_cycles;
         update_timers(new_cycles);
-        //update_graphics(new_cycles);
+        update_graphics(new_cycles);
         do_interrupts();
     }
     render_screen();

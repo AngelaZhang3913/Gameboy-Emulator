@@ -5,15 +5,7 @@
 #include <glut/glut.h>
 #include "graphics.h"
 
-int WIDTH = 160;
-int HEIGHT = 144;
 
-void display()
-{
-    glClear(GL_COLOR_BUFFER_BIT);
-    glDrawPixels(WIDTH, HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, screen_data);
-    glutSwapBuffers(); 
-}
 
 int main(int argc, char* argv[]) {
     load_game_method(); // possibly use args to determine which game to load
@@ -30,7 +22,6 @@ int main(int argc, char* argv[]) {
 
     while (true) { // call the update method 60 times in a second
         update();
-        glutDisplayFunc(display);
         sleep(0.016);
     }
 }
