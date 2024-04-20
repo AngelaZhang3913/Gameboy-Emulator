@@ -6,3 +6,5 @@ extern void render_screen();
 
 extern int WIDTH = 160;
 extern int HEIGHT = 144;
+
+extern void display() ;

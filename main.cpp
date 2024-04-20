@@ -5,8 +5,6 @@
 #include <glut/glut.h>
 #include "graphics.h"
 
-
-
 int main(int argc, char* argv[]) {
     load_game_method(); // possibly use args to determine which game to load
 

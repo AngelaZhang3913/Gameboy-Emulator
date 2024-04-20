@@ -378,8 +378,7 @@ void update_graphics(int cycles) {
     }
 }
 
-void display()
-{
+void display() {
     glClear(GL_COLOR_BUFFER_BIT);
     glDrawPixels(WIDTH, HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, screen_data);
     glutSwapBuffers(); 
