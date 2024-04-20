@@ -17,6 +17,9 @@ WORD tile_address = memory_region + ((tile_indentifier+offset)*tile_size) ;
 
 BYTE screen_data[160][144][3] ;
 
+int WIDTH = 160;
+int HEIGHT = 144;
+
 /*
     00: H-Blank
     01: V-Blank
@@ -69,6 +72,10 @@ BYTE screen_data[160][144][3] ;
     10: Dark Grey
     11: Black
 */
+
+bool is_lcd_enabled() {
+    return test_bit(read_memory(0xFF40), 7);
+}
 
 void set_lcd_status() {
     BYTE current_status = read_memory(0xFF41);
@@ -129,10 +136,6 @@ void set_lcd_status() {
     }
     
     write_memory(0xFF41, current_status);
-}
-
-bool is_lcd_enabled() {
-    return test_bit(read_memory(0xFF40), 7);
 }
 
 COLOR get_color(BYTE num_color, WORD address) {

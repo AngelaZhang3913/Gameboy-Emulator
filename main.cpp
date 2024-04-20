@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
 
     while (true) { // call the update method 60 times in a second
         update();
-        sleep(0.016);
+        usleep(16000);
     }
 }
 
