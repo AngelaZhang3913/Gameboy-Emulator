@@ -788,7 +788,7 @@ int execute_opcode(BYTE op) {
             return 4;
             
         case 0x76 : // halt
-            halt = true;
+            halt = false;
             return 4;
         //case 0x10 00 : // stop
 
@@ -991,10 +991,9 @@ void check_interrupt_enable() {
     // enables the interrupt swtich if the previous inst was EI/DI
     if (intrpt_next_inst == 1) {
         if (en_interrupt) {
-            //request_interrupt()
+            interrupt_switch = 1;
         } else {
-            //UN-request_interrupt()  ????
-            // where does switch get enabled???
+            interrupt_switch = 0;
         }
         intrpt_next_inst = -1;
     } else if (intrpt_next_inst == 0) {
@@ -1024,7 +1023,7 @@ void update() {
         current_cycle += new_cycles;
         update_timers(new_cycles);
         //update_graphics(new_cycles);
-        execute_interrupts();
+        do_interrupts();
     }
     render_screen();
 }
