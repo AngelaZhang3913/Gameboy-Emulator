@@ -1,5 +1,6 @@
 #include "hardware.h"
 #include "timer.h"
+#include "joypad.h"
 #include <cstring>
 #include <iostream>
 using namespace std;
@@ -71,11 +72,13 @@ BYTE read_memory(WORD address) {
     } else if ((address >= 0xA000) && (address <= 0xBFFF)){
         // ram banking
         return ram_banks[address - 0xA000 + current_ram_bank * 0x4000];
+    } else if (address == 0xFF00) {
+        // return joypad state
+        return get_joypad_state();
     } else {
         return rom[address];
     }
 }
-
 
 // direct memory access
 void dma_transfer(BYTE data) {
