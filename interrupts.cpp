@@ -67,5 +67,5 @@ WORD pop_word_from_stack() {
     stack_pointer.wrd++;
     BYTE first = read_memory(stack_pointer.wrd);
     stack_pointer.wrd++;
-    return (first << 8) & second;
+    return (first << 8) | second;
 }
