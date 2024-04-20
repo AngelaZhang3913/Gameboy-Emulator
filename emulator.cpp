@@ -76,7 +76,7 @@ BYTE get_reg_value_8(BYTE bits) {
     return 0;
 }
 
-BYTE get_reg_value_16(BYTE bits) {
+WORD get_reg_value_16(BYTE bits) {
     switch(bits) {
         case 0 : // BC
             return reg_BC.wrd;
@@ -555,7 +555,7 @@ int execute_opcode(BYTE op) {
             program_counter++;
             second = read_memory(program_counter);
             program_counter++;
-            addr = (second << 8) & first;
+            addr = (second << 8) | first;
             val = read_memory(addr);
             set_reg_8(7, val); // loads to register A
             return 16;
@@ -564,7 +564,7 @@ int execute_opcode(BYTE op) {
             program_counter++;
             second = read_memory(program_counter);
             program_counter++;
-            addr = (second << 8) & first;
+            addr = (second << 8) | first;
             val = get_reg_value_8(7);
             write_memory(addr, val);
             return 16;
@@ -777,11 +777,18 @@ int execute_opcode(BYTE op) {
         case 0x00 : // nop
             return 4;
         case 0xF3 : // di
+            // disables interrupts after 1 instruction delay
+            intrpt_next_inst = 0;
+            en_interrupt = 0;
+            return 4;
         case 0xFB : // ei
+            // enable interrupts after 1 instruction delay
+            intrpt_next_inst = 0;
+            en_interrupt = 1;
             return 4;
             
         case 0x76 : // halt
-            halt = true;
+            halt = false;
             return 4;
         //case 0x10 00 : // stop
 
@@ -791,7 +798,7 @@ int execute_opcode(BYTE op) {
             program_counter++;
             second = read_memory(program_counter);
             program_counter++;
-            addr = (second << 8) & first;
+            addr = (second << 8) | first;
             program_counter = addr;
             return 12;
         case 0xC9 : // ret
@@ -802,6 +809,8 @@ int execute_opcode(BYTE op) {
             addr = pop_word_from_stack();
             program_counter = addr;
             // enable interrupts
+            en_interrupt = 1;
+            intrpt_next_inst = 0;
             return 16;
         
         case 0xE9 : // jp HL
@@ -819,7 +828,7 @@ int execute_opcode(BYTE op) {
             program_counter++;
             second = read_memory(program_counter);
             program_counter++;
-            addr = (second << 8) & first;
+            addr = (second << 8) | first;
             // pushes next instruction address onto stack
             push_word_onto_stack(program_counter);
             // jumps to address at nn
@@ -855,7 +864,7 @@ int execute_opcode(BYTE op) {
         program_counter++;
         second = read_memory(program_counter);
         program_counter++;
-        val_16 = (second << 8) & first;
+        val_16 = (second << 8) | first;
         reg_num = (op >> 4) & 0b11;
         set_reg_16(reg_num, val_16);
         return 12;
@@ -928,7 +937,7 @@ int execute_opcode(BYTE op) {
         program_counter++;
         second = read_memory(program_counter);
         program_counter++;
-        addr = (second << 8) & first;
+        addr = (second << 8) | first;
         if (check_flag(val)) {
             program_counter = addr;
             return 16;
@@ -952,7 +961,7 @@ int execute_opcode(BYTE op) {
         program_counter++;
         second = read_memory(program_counter);
         program_counter++;
-        addr = (second << 8) & first;
+        addr = (second << 8) | first;
         if (check_flag(val)) {
             push_word_onto_stack(program_counter);
             program_counter = addr;
@@ -978,15 +987,34 @@ int execute_opcode(BYTE op) {
     return 0;
 }
 
+void check_interrupt_enable() {
+    // enables the interrupt swtich if the previous inst was EI/DI
+    if (intrpt_next_inst == 1) {
+        if (en_interrupt) {
+            interrupt_switch = 1;
+        } else {
+            interrupt_switch = 0;
+        }
+        intrpt_next_inst = -1;
+    } else if (intrpt_next_inst == 0) {
+        intrpt_next_inst = 1;
+    } else {
+        intrpt_next_inst = -1; // no enable/disable
+    }
+}
+
 int execute_next_opcode() {
     // returns the number of cycles for the instruction
     if(!halt) {
         BYTE opcode = read_memory(program_counter);
         program_counter++;
-        return execute_opcode(opcode);
+        int cycles = execute_opcode(opcode);
+        check_interrupt_enable();
+        return cycles;
     }
     return 0;
 }
+
 
 void update() {
     int current_cycle;
@@ -995,7 +1023,7 @@ void update() {
         current_cycle += new_cycles;
         update_timers(new_cycles);
         //update_graphics(new_cycles);
-        execute_interrupts();
+        do_interrupts();
     }
     render_screen();
 }

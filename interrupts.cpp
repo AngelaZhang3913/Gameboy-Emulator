@@ -30,22 +30,27 @@ void do_interrupts() {
 void sevice_interrupt(int id) {
     interrupt_switch = false;
     BYTE request = read_memory(0xFF0F);
-    request = bitset(request, id);
+    request = bitreset(request, id); // IS THIS CORRECT??
     write_memory(0xFF0F, request);
 
     // save PC to the stack
     push_word_onto_stack(program_counter);
-    if (id == 0x40) {
+    
+    if (id == 0) {
         // V-blank
+        program_counter = 0x40;
     }
-    if (id == 0x48) {
+    if (id == 1) {
         // LCD
+        program_counter = 0x48;
     }
-    if (id == 0x50) {
+    if (id == 2) {
         // Timer
+        program_counter = 0x50;
     }
-    if (id == 0x60) {
+    if (id == 4) {
         // Joypad
+        program_counter = 0x60;
     }
 }
 
