@@ -76,7 +76,7 @@ BYTE get_reg_value_8(BYTE bits) {
     return 0;
 }
 
-BYTE get_reg_value_16(BYTE bits) {
+WORD get_reg_value_16(BYTE bits) {
     switch(bits) {
         case 0 : // BC
             return reg_BC.wrd;
@@ -809,6 +809,8 @@ int execute_opcode(BYTE op) {
             addr = pop_word_from_stack();
             program_counter = addr;
             // enable interrupts
+            en_interrupt = 1;
+            intrpt_next_inst = 0;
             return 16;
         
         case 0xE9 : // jp HL
@@ -989,9 +991,10 @@ void check_interrupt_enable() {
     // enables the interrupt swtich if the previous inst was EI/DI
     if (intrpt_next_inst == 1) {
         if (en_interrupt) {
-            interrupt_switch = 1;
+            //request_interrupt()
         } else {
-            interrupt_switch = 0;
+            //UN-request_interrupt()  ????
+            // where does switch get enabled???
         }
         intrpt_next_inst = -1;
     } else if (intrpt_next_inst == 0) {
