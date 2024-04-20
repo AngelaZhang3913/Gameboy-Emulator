@@ -777,7 +777,14 @@ int execute_opcode(BYTE op) {
         case 0x00 : // nop
             return 4;
         case 0xF3 : // di
+            // disables interrupts after 1 instruction delay
+            intrpt_next_inst = 0;
+            en_interrupt = 0;
+            return 4;
         case 0xFB : // ei
+            // enable interrupts after 1 instruction delay
+            intrpt_next_inst = 0;
+            en_interrupt = 1;
             return 4;
             
         case 0x76 : // halt
@@ -978,15 +985,34 @@ int execute_opcode(BYTE op) {
     return 0;
 }
 
+void check_interrupt_enable() {
+    // enables the interrupt swtich if the previous inst was EI/DI
+    if (intrpt_next_inst == 1) {
+        if (en_interrupt) {
+            interrupt_switch = 1;
+        } else {
+            interrupt_switch = 0;
+        }
+        intrpt_next_inst = -1;
+    } else if (intrpt_next_inst == 0) {
+        intrpt_next_inst = 1;
+    } else {
+        intrpt_next_inst = -1; // no enable/disable
+    }
+}
+
 int execute_next_opcode() {
     // returns the number of cycles for the instruction
     if(!halt) {
         BYTE opcode = read_memory(program_counter);
         program_counter++;
-        return execute_opcode(opcode);
+        int cycles = execute_opcode(opcode);
+        check_interrupt_enable();
+        return cycles;
     }
     return 0;
 }
+
 
 void update() {
     int current_cycle;
