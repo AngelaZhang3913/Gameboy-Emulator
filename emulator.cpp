@@ -301,7 +301,6 @@ void execute_inc(BYTE reg, BYTE n, WORD addr, bool isHL) {
     set_flag(FLAG_H, (n & 0b1111) == 0xf);
     if (isHL) write_memory(addr, res);
     else set_reg_8(reg, res);
-    print_result();
 }
 
 void execute_inc_rr(Register* reg) { // no flags need to be set off
@@ -532,7 +531,7 @@ int execute_extended_opcode() {
         case 0b11000000 : // set b r
             reg_num = op & 0b111;
             val = (op >> 3) & 0b111;
-            execute_reset(reg_num, 0, get_reg_value_8(reg_num), val, true);
+            execute_set(reg_num, 0, get_reg_value_8(reg_num), val, true);
             return 8;
     }
 
