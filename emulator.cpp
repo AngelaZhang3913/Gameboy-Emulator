@@ -2,6 +2,9 @@
 #include "interrupts.h"
 #include "graphics.h"
 
+int intrpt_next_inst = -1;
+bool en_interrupt = 0;
+
 // opcode masks (only the ones with varying bits)
 // GMB 8 bit-load commands
 BYTE ld_r_r_mask = 0b11000000;
