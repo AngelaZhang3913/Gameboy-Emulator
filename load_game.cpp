@@ -4,6 +4,7 @@
 #include <iostream>
 using namespace std;
 #include "typedef.h"
+#include "load_game.h"
 
 void load_game_method() {
     memset(cartridge_memory, 0, sizeof(BYTE)) ;
