@@ -1,4 +1,5 @@
 #include "typedef.h"
+#include "interrupts.h"
 
 extern BYTE joypad_state;
 

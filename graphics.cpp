@@ -1,8 +1,9 @@
 #include "typedef.h"
 #include "hardware.h"
 #include "interrupts.h"
-#include <glut/glut.h>
 #include "graphics.h"
+#include <iostream>
+
 
 enum COLOR { WHITE, LIGHT_GREY, DARK_GREY, BLACK};
 
@@ -15,10 +16,15 @@ int tile_indentifier = 0;
 
 WORD tile_address = memory_region + ((tile_indentifier+offset)*tile_size) ;
 
-BYTE screen_data[160][144][3] ;
+
+int channels = 3; // for a RGB image
+char* pixels = new char[WIDTH * HEIGHT * channels];
 
 int WIDTH = 160;
 int HEIGHT = 144;
+
+
+BYTE screen_data[144][160][3] ;
 
 /*
     00: H-Blank
@@ -387,6 +393,84 @@ void update_graphics(int cycles) {
 //     glutSwapBuffers(); 
 // }
 
+// Create a window data type
+    // This pointer will point to the 
+    // window that is allocated from SDL_CreateWindow
+    SDL_Window* window=nullptr;
+
+void create_window() {
+
+    // Initialize the video subsystem.
+    // If it returns less than 1, then an
+    // error code will be received.
+    if(SDL_Init(SDL_INIT_VIDEO) < 0){
+        std::cout << "SDL could not be initialized: " <<
+                  SDL_GetError();
+    }else{
+        std::cout << "SDL video system is ready to go\n";
+    }
+    // Before we create our window, specify OpenGL version
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,24);
+
+    // Request a window to be created for our platform
+    // The parameters are for the title, x and y position,
+    // and the width and height of the window.
+    window = SDL_CreateWindow("C++ SDL2 Window",
+            20,
+            20,
+            WIDTH,
+            HEIGHT,
+            SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+
+    // OpenGL setup the graphics context
+    SDL_GLContext context;
+    context = SDL_GL_CreateContext(window);
+
+    // Setup our function pointers
+    gladLoadGLLoader(SDL_GL_GetProcAddress);
+}
+
+
+void print_screen_data() {
+    for (int i = 0; i < 144; i++) {
+        for (int j = 0; j < 160; j++) {
+            printf("%d", screen_data[i][j][0]);
+            printf("%d", screen_data[i][j][1]);
+            printf("%d ", screen_data[i][j][2]);
+            printf("| ");
+        }
+        printf("\n");
+    }
+}
+
+void set_screen_data() {
+    for (int i = 0; i < 144; i++) {
+        for (int j = 0; j < 160; j++) {
+            screen_data[i][j][0] = 255;
+            screen_data[i][j][1] = 0;
+            screen_data[i][j][2] = 0;
+        }
+        printf("\n");
+    }
+}
+
 void render_screen() {
-    // glutDisplayFunc(display);
+    set_screen_data();
+    print_screen_data();
+    SDL_Surface *surface = SDL_CreateRGBSurfaceFrom((void*)screen_data,
+                WIDTH,
+                HEIGHT,
+                channels * 8,          // bits per pixel = 24
+                WIDTH * channels,      // pitch
+                0x0000FF,              // red mask
+                0x00FF00,              // green mask
+                0xFF0000,              // blue mask
+                0);                    // alpha mask (none)
+    SDL_BlitSurface(surface, NULL, SDL_GetWindowSurface(window), NULL );
+    SDL_UpdateWindowSurface(window);
 }
