@@ -310,7 +310,6 @@ void execute_dec(BYTE reg, BYTE n, WORD addr, bool isHL) {
     set_flag(FLAG_H, (n & 0b1111) == 0);
     if (isHL) write_memory(addr, res);
     else set_reg_8(reg, res);
-    print_result();
 }
 
 void execute_dec_rr(Register* reg) { // no flags need to be set off
@@ -367,7 +366,6 @@ void execute_right_shift_rotate(BYTE reg_num, WORD addr, BYTE n, bool is_reg, BY
     set_all_flags(res == 0, 0, 0, bit_0);
     if(is_reg) set_reg_8(reg_num, res);
     else write_memory(addr, res);
-    print_result();
 }
 
 void execute_swap(BYTE reg_num, WORD addr, BYTE n, bool is_reg) {
