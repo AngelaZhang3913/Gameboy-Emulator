@@ -167,7 +167,7 @@ void set_all_flags(BYTE z, BYTE s, BYTE h, BYTE c) {
 }
 
 void print_result() {
-    printf("result = %d\n", reg_AF.hi);
+    printf("result = %x\n", reg_AF.hi);
     printf("flag z: %d\n", get_flag(FLAG_Z) );
     printf("flag s: %d\n", get_flag(FLAG_S) );
     printf("flag h: %d\n", get_flag(FLAG_H) );
@@ -318,28 +318,24 @@ void execute_dec_rr(Register* reg) { // no flags need to be set off
 }
 
 void execute_daa() {
-    int int_res = reg_AF.hi;
+    int res = reg_AF.hi;
     if (!get_flag(FLAG_S)) {
-        if ((reg_AF.hi & 0b1111) > 0x9) {
-            int_res += 0x6;
-            reg_AF.hi += 0x6;
-        } else if (reg_AF.hi > 0x99) {
-            int_res += 0x60;
-            reg_AF.hi += 0x60;
-        }
+        if ((reg_AF.hi & 0b1111) > 0x9) res += 0x6;
+        if (reg_AF.hi > 0x99) res += 0x60;
     }
-    if (get_flag(FLAG_H)) {
-        int_res += 0x6;
-        reg_AF.hi += 0x6;
-    } 
-    if (get_flag(FLAG_C)) {
-        int_res += 0x60;
-        reg_AF.hi += 0x60;
+    if (get_flag(FLAG_H)){
+        if(!get_flag(FLAG_S)) res += 0x6;
+        else res -= 0x6;
+    }
+    if (get_flag(FLAG_C)){
+        if(!get_flag(FLAG_S)) res += 0x60;
+        else res -= 0x60;
     }
 
-    set_flag(FLAG_Z, reg_AF.hi == 0);
+    set_flag(FLAG_Z, res == 0);
     set_flag(FLAG_H, 0);
-    set_flag(FLAG_C, int_res > 0xff);
+    set_flag(FLAG_C, res > 0xff);
+    reg_AF.hi = (BYTE) res;
 }
 
 void execute_cpl() {
