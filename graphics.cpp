@@ -81,8 +81,11 @@ BYTE screen_data[144][160][3] ;
 
 bool is_lcd_enabled() {
     BYTE lcd_val = read_memory(0xFF40);
-    //printf("lcd value: %0X\n", lcd_val);
-    return test_bit(read_memory(0xFF40), 7);
+    bool lcd_enable = test_bit(read_memory(0xFF40), 7);
+    if (lcd_enable) {
+        printf("lcd enabled\n");
+    }
+    return lcd_enable;
 }
 
 void set_lcd_status() {
