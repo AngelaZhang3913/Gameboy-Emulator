@@ -132,7 +132,7 @@ void write_memory(WORD address, BYTE data) {
         printf("ADDRESS IS FF40");
     }
 
-    printf("WRITING TO MEMORY %0X\n", address);
+    // printf("WRITING TO MEMORY %0X\n", address);
 
     if (address < 0x8000) {
         // ROM banking

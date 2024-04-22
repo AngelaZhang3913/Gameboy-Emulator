@@ -1107,8 +1107,8 @@ int execute_next_opcode() {
         if (program_counter == 0x101) {
             //printf("cartridge: %0x\n", cartridge_memory[0x101]);
         }
-        printf("pc: %0X\n", program_counter);
-        printf("opcode: %0X\n", opcode);
+        // printf("pc: %0X\n", program_counter);
+        // printf("opcode: %0X\n", opcode);
         // if (x < 10) {
         //     printf("pc: %0X\n", program_counter);
         //     printf("opcode: %0X\n", opcode);
@@ -1125,7 +1125,7 @@ int execute_next_opcode() {
 
 void update() {
     int current_cycle;
-    while (current_cycle < 24) {
+    while (current_cycle < 69905) {
         int new_cycles = execute_next_opcode();
         current_cycle += new_cycles;
         update_timers(new_cycles);
