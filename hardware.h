@@ -41,19 +41,6 @@ extern WORD program_counter;
 extern Register stack_pointer;
 
 /* -------------
-  INITIALIZATION
- ------------- */
-
-// program_counter = 0x100;
-// stack_pointer = 0xFFFE;
-// reg_AF = 0x01B0;
-// reg_BC = 0x0013;
-// reg_DE = 0x00D8;
-// reg_HL = 0x014D;
-
-// ... and the special rom registers
-
-/* -------------
      MEMORY
  ------------- */
 
@@ -85,3 +72,5 @@ extern BYTE game_memory[0x80000]; // don't know if this actually works
 extern BYTE bitset(BYTE byte, int bit) ;
 
 extern BYTE bitreset(BYTE byte, int bit) ;
+
+extern void initialize_rom();

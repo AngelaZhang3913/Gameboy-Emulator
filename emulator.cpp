@@ -1107,11 +1107,13 @@ int execute_next_opcode() {
         if (program_counter == 0x101) {
             //printf("cartridge: %0x\n", cartridge_memory[0x101]);
         }
-        if (x < 10) {
-            //printf("pc: %0X\n", program_counter);
-            //printf("opcode: %0X\n", opcode);
-            x++;
-        }
+        printf("pc: %0X\n", program_counter);
+        printf("opcode: %0X\n", opcode);
+        // if (x < 10) {
+        //     printf("pc: %0X\n", program_counter);
+        //     printf("opcode: %0X\n", opcode);
+        //     x++;
+        // }
         program_counter++;
         int cycles = execute_opcode(opcode);
         check_interrupt_enable();
