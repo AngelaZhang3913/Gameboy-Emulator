@@ -13,7 +13,7 @@
 
 int main(int argc, char* argv[]){
 
-    //load_game_method();
+    load_game_method();
 
     create_window();
 
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]){
 
         SDL_GL_SwapWindow(window);
 
-        usleep(16000);
+        sleep(2);
     }
 
     // We destroy our window. We are passing in the pointer

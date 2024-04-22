@@ -80,6 +80,8 @@ BYTE screen_data[144][160][3] ;
 */
 
 bool is_lcd_enabled() {
+    BYTE lcd_val = read_memory(0xFF40);
+    //printf("lcd value: %0X\n", lcd_val);
     return test_bit(read_memory(0xFF40), 7);
 }
 
@@ -90,10 +92,10 @@ void set_lcd_status() {
         // set mode to one and reset scan line
         scanline_counter = 456;
         rom[0xFF44] = 0;
-        current_status &= 252 ; // zero out the lower two bits
-        current_status = bitset(current_status, 0) ;
-        write_memory(0xFF41, current_status) ; // reset current scan line
-        return ;
+        current_status &= 252; // zero out the lower two bits
+        current_status = bitset(current_status, 0);
+        write_memory(0xFF41, current_status); // reset current scan line
+        return;
     }
 
     BYTE current_scanline = read_memory(0xFF44);
@@ -360,6 +362,7 @@ void draw_scanline() {
 
 void update_graphics(int cycles) {
     set_lcd_status();
+    //printf("scanline = %d\n", scanline_counter);
 
     // check if lcd is enabled
     if (is_lcd_enabled()) {
@@ -371,7 +374,7 @@ void update_graphics(int cycles) {
     if (scanline_counter <= 0) {
         // move on to the next scan line
 
-        scanline_counter = 456;
+        scanline_counter = 456; // 456 clockcycles ot draw one scanline and move onto the next
         rom[0xFF44]++; // current scan line is stored in 0xFF44
         BYTE current_scanline = read_memory(0xFF44);
 
@@ -455,13 +458,12 @@ void set_screen_data() {
             screen_data[i][j][1] = 0;
             screen_data[i][j][2] = 0;
         }
-        printf("\n");
     }
 }
 
 void render_screen() {
-    set_screen_data();
-    print_screen_data();
+    //set_screen_data();
+    //print_screen_data();
     SDL_Surface *surface = SDL_CreateRGBSurfaceFrom((void*)screen_data,
                 WIDTH,
                 HEIGHT,
