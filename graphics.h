@@ -3,7 +3,7 @@
 #include <glad/glad.h>
 
 
-extern BYTE screen_data[160][144][3] ;
+extern BYTE screen_data[144][160][3] ;
 extern void update_graphics(int cycles) ;
 extern void render_screen();
 
