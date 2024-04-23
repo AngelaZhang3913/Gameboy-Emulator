@@ -19,11 +19,11 @@ WORD tile_address = memory_region + ((tile_identifier+offset)*tile_size) ;
 int channels = 3; // for a RGB image
 char* pixels = new char[WIDTH * HEIGHT * channels];
 
-int WIDTH = 144;
-int HEIGHT = 160;
+int WIDTH = 160;
+int HEIGHT = 144;
 
 
-BYTE screen_data[160][144][3] ;
+BYTE screen_data[144][160][3] ;
 
 /*
     00: H-Blank
@@ -78,11 +78,12 @@ BYTE screen_data[160][144][3] ;
     11: Black
 */
 
+bool lcd_enable = false;
 bool is_lcd_enabled() {
     BYTE lcd_val = read_memory(0xFF40);
-    bool lcd_enable = test_bit(read_memory(0xFF40), 7);
+    lcd_enable = test_bit(read_memory(0xFF40), 7);
     if (lcd_enable) {
-        //printf("lcd enabled\n");
+        ////printf("lcd enabled\n");
     }
     return lcd_enable;
 }
@@ -236,6 +237,7 @@ void render_tiles(BYTE lcd_control_reg) {
         int color_value = (get_bit(data2, color_bit) << 1) | get_bit(data1, color_bit);
 
         COLOR color = get_color(color_value, 0xFF47) ;
+        // //printf("color = %d\n", color);
         int red = color == WHITE ? 255 :
                   color == LIGHT_GREY ? 0xCC :
                   color == DARK_GREY ? 0x77 :
@@ -252,15 +254,15 @@ void render_tiles(BYTE lcd_control_reg) {
         int y = read_memory(0xFF44);
 
         if ((y >= 0) && (y < 144) && (x >= 0) && (x < 160)) {
-            screen_data[x][y][0] = red;
-            screen_data[x][y][1] = green;
-            screen_data[x][y][2] = blue;
+            screen_data[y][x][0] = red;
+            screen_data[y][x][1] = green;
+            screen_data[y][x][2] = blue;
         }
     }
 }
 
 void render_sprites(BYTE lcd_control_reg) {
-    printf("Attempting to render a sprite\n");
+    //printf("Attempting to render a sprite\n");
 
     for (int sprite = 0 ; sprite < 40; sprite++) {
 
@@ -345,9 +347,9 @@ void render_sprites(BYTE lcd_control_reg) {
                     continue ;
                 }
 
-                screen_data[x][y][0] = red ;
-                screen_data[x][y][1] = green ;
-                screen_data[x][y][2] = blue ;
+                screen_data[y][x][0] = red ;
+                screen_data[y][x][1] = green ;
+                screen_data[y][x][2] = blue ;
             }
         }
     }
@@ -367,18 +369,20 @@ void draw_scanline() {
 
 void update_graphics(int cycles) {
     set_lcd_status();
-    //printf("scanline = %d\n", scanline_counter);
+    ////printf("scanline = %d\n", scanline_counter);
 
     // check if lcd is enabled
     if (is_lcd_enabled()) {
         scanline_counter -= cycles;
     } else {
+        printf("lcd not enabled\n");
         return;
     }
 
-    //printf("scanline counter = %d\n", scanline_counter);
+    ////printf("scanline counter = %d\n", scanline_counter);
     if (scanline_counter <= 0) {
         // move on to the next scan line
+        // //printf("next scan line, pc = %x\n", program_counter);
 
         scanline_counter = 456; // 456 clockcycles ot draw one scanline and move onto the next
         rom[0xFF44]++; // current scan line is stored in 0xFF44
@@ -443,19 +447,19 @@ void create_window() {
     // Setup our function pointers
     gladLoadGLLoader(SDL_GL_GetProcAddress);
 
-    //printf("window:%p\n", window);
+    ////printf("window:%p\n", window);
 }
 
 
 void print_screen_data() {
     for (int i = 0; i < 144; i++) {
         for (int j = 0; j < 160; j++) {
-            printf("%d", screen_data[i][j][0]);
-            printf("%d", screen_data[i][j][1]);
-            printf("%d ", screen_data[i][j][2]);
-            printf("| ");
+            //printf("%d", screen_data[i][j][0]);
+            //printf("%d", screen_data[i][j][1]);
+            //printf("%d ", screen_data[i][j][2]);
+            //printf("| ");
         }
-        printf("\n");
+        //printf("\n");
     }
 }
 
@@ -488,9 +492,9 @@ void render_screen() {
                 0x00FF00,              // green mask
                 0xFF0000,              // blue mask
                 0);                    // alpha mask (none)
-    //printf("window:%p\n", window);
-    // printf("A\n");
+    ////printf("window:%p\n", window);
+    // //printf("A\n");
     SDL_BlitSurface(surface, NULL, SDL_GetWindowSurface(window), NULL );
-    //printf("B\n");
+    ////printf("B\n");
     SDL_UpdateWindowSurface(window);
 }

@@ -802,14 +802,14 @@ int execute_opcode(BYTE op) {
             //printf("add SP, dd\n");
             val = read_memory(program_counter);
             program_counter++;
-            stack_pointer.wrd += val;
+            stack_pointer.wrd += sign_extend(val);
             return 16;
         
         case 0xF8 : // ld HL, SP+dd
             //printf("ld HL, SP+dd\n");
             val = read_memory(program_counter);
             program_counter++;
-            reg_HL.wrd = stack_pointer.wrd + val;
+            reg_HL.wrd = stack_pointer.wrd + sign_extend(val);
             return 12;
         
         // ROTATE AND SHIFT
