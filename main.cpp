@@ -29,9 +29,13 @@ static BYTE bios [0x100] = {
 	0x21, 0x04, 0x01, 0x11, 0xA8, 0x00, 0x1A, 0x13, 0xBE, 0x20, 0xFE, 0x23, 0x7D, 0xFE, 0x34, 0x20,
 	0xF5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20, 0xFB, 0x86, 0x20, 0xFE, 0x3E, 0x01, 0xE0, 0x50 };
 
+extern BYTE first_100 [0x100];
+
 int main(int argc, char* argv[]){
 
     load_game_method();
+
+    makefile();
 
     create_window();
 
@@ -42,8 +46,9 @@ int main(int argc, char* argv[]){
     while(gameIsRunning){
         if(!started) {
             memcpy(cartridge_memory, bios, 0x100 * sizeof(BYTE));
-            printf("%x\n", cartridge_memory[0x101]);
         }
+        else if(read_memory(0xFF50))
+            memcpy(cartridge_memory, first_100, 0x100 * sizeof(BYTE));
         update();
         started = true;
 
@@ -121,6 +126,8 @@ int main(int argc, char* argv[]){
     SDL_Delay(3000);
     // our program.
     SDL_Quit();
+
+    closefile();
     return 0;
 }
 
