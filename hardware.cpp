@@ -129,7 +129,8 @@ void dma_transfer(BYTE data) {
 
 void write_memory(WORD address, BYTE data) {
     if (address == 0xFF40) {
-        printf("ADDRESS IS FF40");
+        printf("ADDRESS IS FF40\n");
+        printf("writing %0X\n", data);
     }
 
     // printf("WRITING TO MEMORY %0X\n", address);

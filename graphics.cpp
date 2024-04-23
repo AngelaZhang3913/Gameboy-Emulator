@@ -12,18 +12,18 @@ const WORD memory_region = 0x8800 ;
 const int tile_size = 16 ;
 const int offset = 128 ;
 
-int tile_indentifier = 0;
+int tile_identifier = 0;
 
-WORD tile_address = memory_region + ((tile_indentifier+offset)*tile_size) ;
+WORD tile_address = memory_region + ((tile_identifier+offset)*tile_size) ;
 
 int channels = 3; // for a RGB image
 char* pixels = new char[WIDTH * HEIGHT * channels];
 
-int WIDTH = 160;
-int HEIGHT = 144;
+int WIDTH = 144;
+int HEIGHT = 160;
 
 
-BYTE screen_data[144][160][3] ;
+BYTE screen_data[160][144][3] ;
 
 /*
     00: H-Blank
@@ -162,10 +162,10 @@ COLOR get_color(BYTE num_color, WORD address) {
 
     int color_val = (get_bit(palette, bit1) << 1) | get_bit(palette, bit2);
 
-    return  color_val == 1 ? LIGHT_GREY :
+    return  color_val == 0 ? WHITE :
             color_val == 2 ? DARK_GREY :
             color_val == 3 ? BLACK :
-            WHITE;
+            LIGHT_GREY;
 }
 
 void render_tiles(BYTE lcd_control_reg) {
@@ -232,7 +232,7 @@ void render_tiles(BYTE lcd_control_reg) {
         BYTE data2 = read_memory(tile_location + line + 1);
 
         // pixel 0 = bit 7, pixel 1 = bit 6, etc
-        int color_bit = (x_position % 8 - 7) * -1 ;
+        int color_bit = ((x_position % 8) - 7) * -1 ;
         int color_value = (get_bit(data2, color_bit) << 1) | get_bit(data1, color_bit);
 
         COLOR color = get_color(color_value, 0xFF47) ;
@@ -252,14 +252,15 @@ void render_tiles(BYTE lcd_control_reg) {
         int y = read_memory(0xFF44);
 
         if ((y >= 0) && (y < 144) && (x >= 0) && (x < 160)) {
-            screen_data[y][x][0] = red;
-            screen_data[y][x][1] = green;
-            screen_data[y][x][2] = blue;
+            screen_data[x][y][0] = red;
+            screen_data[x][y][1] = green;
+            screen_data[x][y][2] = blue;
         }
     }
 }
 
 void render_sprites(BYTE lcd_control_reg) {
+    printf("Attempting to render a sprite\n");
 
     for (int sprite = 0 ; sprite < 40; sprite++) {
 
@@ -339,14 +340,14 @@ void render_sprites(BYTE lcd_control_reg) {
                 int x = xPos + 7 - tilePixel;
 
                 // check in bounds
-                int y = scanline;
+                int y = read_memory(0xFF44);
                 if ((y >= 0) && (y < 144) && (x >= 0) && (x < 160)) {
                     continue ;
                 }
 
-                screen_data[y][x][0] = red ;
-                screen_data[y][x][1] = green ;
-                screen_data[y][x][2] = blue ;
+                screen_data[x][y][0] = red ;
+                screen_data[x][y][1] = green ;
+                screen_data[x][y][2] = blue ;
             }
         }
     }
@@ -459,10 +460,17 @@ void print_screen_data() {
 }
 
 void set_screen_data() {
-    for (int i = 0; i < 144; i++) {
+    for (int i = 0; i < 72; i++) {
         for (int j = 0; j < 160; j++) {
             screen_data[i][j][0] = 255;
             screen_data[i][j][1] = 0;
+            screen_data[i][j][2] = 0;
+        }
+    }
+    for (int i = 72; i < 144; i++) {
+        for (int j = 0; j < 160; j++) {
+            screen_data[i][j][0] = 0;
+            screen_data[i][j][1] = 255;
             screen_data[i][j][2] = 0;
         }
     }
