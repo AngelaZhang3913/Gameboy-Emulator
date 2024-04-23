@@ -67,7 +67,8 @@ int main(int argc, char* argv[]){
 
         SDL_GL_SwapWindow(window);
 
-        sleep(1);
+        usleep(16000);
+        //sleep(1);
     }
 
     // We destroy our window. We are passing in the pointer

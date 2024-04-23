@@ -162,10 +162,10 @@ COLOR get_color(BYTE num_color, WORD address) {
 
     int color_val = (get_bit(palette, bit1) << 1) | get_bit(palette, bit2);
 
-    return  color_val == 1 ? LIGHT_GREY :
+    return  color_val == 0 ? WHITE :
             color_val == 2 ? DARK_GREY :
             color_val == 3 ? BLACK :
-            WHITE;
+            LIGHT_GREY;
 }
 
 void render_tiles(BYTE lcd_control_reg) {
@@ -260,6 +260,7 @@ void render_tiles(BYTE lcd_control_reg) {
 }
 
 void render_sprites(BYTE lcd_control_reg) {
+    printf("Attempting to render a sprite\n");
 
     for (int sprite = 0 ; sprite < 40; sprite++) {
 
@@ -339,7 +340,7 @@ void render_sprites(BYTE lcd_control_reg) {
                 int x = xPos + 7 - tilePixel;
 
                 // check in bounds
-                int y = scanline;
+                int y = read_memory(0xFF44);
                 if ((y >= 0) && (y < 144) && (x >= 0) && (x < 160)) {
                     continue ;
                 }
@@ -459,10 +460,17 @@ void print_screen_data() {
 }
 
 void set_screen_data() {
-    for (int i = 0; i < 144; i++) {
+    for (int i = 0; i < 72; i++) {
         for (int j = 0; j < 160; j++) {
             screen_data[i][j][0] = 255;
             screen_data[i][j][1] = 0;
+            screen_data[i][j][2] = 0;
+        }
+    }
+    for (int i = 72; i < 144; i++) {
+        for (int j = 0; j < 160; j++) {
+            screen_data[i][j][0] = 0;
+            screen_data[i][j][1] = 255;
             screen_data[i][j][2] = 0;
         }
     }
