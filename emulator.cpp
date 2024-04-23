@@ -112,7 +112,7 @@ void set_reg_8(BYTE reg, BYTE val) {
             break;
         case 1 : // C
             reg_BC.lo = val;
-            printf("C = %x\n", reg_BC.lo);
+            ////printf("C = %x\n", reg_BC.lo);
             break;
         case 2 : // D
             reg_DE.hi = val;
@@ -411,6 +411,13 @@ bool check_flag(BYTE val) {
     return 0;
 }
 
+WORD sign_extend(BYTE num) {
+    WORD res = (WORD) num;
+    if(num & 0x10)
+        res = res | 0xff00;
+    return res;
+}
+
 int execute_extended_opcode() {
     BYTE op = read_memory(program_counter);
     program_counter++;
@@ -636,10 +643,10 @@ int execute_opcode(BYTE op) {
             set_reg_8(7, val);
             return 8;
         case 0xE2 : // ld FF00+C, A
-            printf("pc = %x\n", program_counter);
-            printf("ld FF00+C, A\n");
+            //printf("pc = %x\n", program_counter);
+            //printf("ld FF00+C, A\n");
             addr = 0xFF00 + get_reg_value_8(1); // 1 is C
-            printf("addr = %x\n", addr);
+            //printf("addr = %x\n", addr);
             val = get_reg_value_8(7);
             write_memory(addr, val);
             return 8;
@@ -890,7 +897,7 @@ int execute_opcode(BYTE op) {
             //printf("jr PC+dd\n");
             val = read_memory(program_counter);
             program_counter++;
-            program_counter += val;
+            program_counter += sign_extend(val);
             return 12;
 
         case 0xCD : // call nn
@@ -1042,7 +1049,7 @@ int execute_opcode(BYTE op) {
         val = (op >> 3) & 0b11;
         second = read_memory(program_counter);
         program_counter++;
-        addr = program_counter + second;
+        addr = program_counter + sign_extend(second);
         if (check_flag(val)) {
             program_counter = addr;
             return 12; 
@@ -1107,13 +1114,13 @@ int execute_next_opcode() {
         if (program_counter == 0x101) {
             //printf("cartridge: %0x\n", cartridge_memory[0x101]);
         }
-        // printf("pc: %0X\n", program_counter);
-        // printf("opcode: %0X\n", opcode);
-        // if (x < 10) {
-        //     printf("pc: %0X\n", program_counter);
-        //     printf("opcode: %0X\n", opcode);
-        //     x++;
-        // }
+        printf("pc: %0X\n", program_counter);
+        printf("opcode: %0X\n", opcode);
+        if (x < 10) {
+            //printf("pc: %0X\n", program_counter);
+            //printf("opcode: %0X\n", opcode);
+            x++;
+        }
         program_counter++;
         int cycles = execute_opcode(opcode);
         check_interrupt_enable();
@@ -1125,7 +1132,7 @@ int execute_next_opcode() {
 
 void update() {
     int current_cycle;
-    while (current_cycle < 69905) {
+    while (current_cycle < 66905) {
         int new_cycles = execute_next_opcode();
         current_cycle += new_cycles;
         update_timers(new_cycles);
