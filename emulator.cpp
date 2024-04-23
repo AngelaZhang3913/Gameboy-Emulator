@@ -1135,6 +1135,9 @@ int execute_next_opcode() {
 
         myfile << "pc: " << std::hex << program_counter << "\n";
         myfile << "opcode: " << std::hex << (int)opcode << "\n";
+        if (is_lcd_enabled()) {
+            myfile << "lcd enabled" << std::hex << (int)opcode << "\n";
+        }
         // if (program_counter >= 0x100 && x < 10) {
         //     myfile << "pc: " << program_counter << "\n";
         //     myfile << "opcode: " << opcode << "\n";

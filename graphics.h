@@ -15,3 +15,5 @@ extern void display() ;
 extern void create_window();
 
 extern SDL_Window* window;
+
+extern bool is_lcd_enabled();
