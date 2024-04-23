@@ -10,7 +10,7 @@ Register reg_BC = {0x0013};
 Register reg_DE = {0x00D8};
 Register reg_HL = {0x014D};
 
-WORD program_counter = 0x100;
+WORD program_counter = 0;
 Register stack_pointer = {0xFFFE};
 
 BYTE rom[0x10000];
@@ -169,6 +169,8 @@ void write_memory(WORD address, BYTE data) {
         dma_transfer(data);
     } else {
         // no restriction
+        if(address >= 0x8000 && address <= 0x97ff)
+            printf("address = %x, data = %x\n", address, data);
         rom[address] = data;
     }
 }

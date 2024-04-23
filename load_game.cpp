@@ -7,7 +7,7 @@ using namespace std;
 #include "load_game.h"
 
 void load_game_method() {
-    memset(cartridge_memory, 0, sizeof(BYTE)) ;
+    memset(cartridge_memory, 0, sizeof(BYTE));
 
     FILE *game_in;
     game_in = fopen( "Tetris.gb", "rb" );

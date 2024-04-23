@@ -169,7 +169,7 @@ COLOR get_color(BYTE num_color, WORD address) {
 }
 
 void render_tiles(BYTE lcd_control_reg) {
-    printf("render tiles\n");
+    //printf("render tiles\n");
     WORD tile_data = 0 ;
     WORD background_memory = 0 ;
     bool unsign = true ;
@@ -353,7 +353,7 @@ void render_sprites(BYTE lcd_control_reg) {
 }
 
 void draw_scanline() {
-    printf("draw_scanline\n");
+    //printf("draw_scanline\n");
     BYTE lcd_control_reg = read_memory(0xFF40);
     if (test_bit(lcd_control_reg, 0)) {
         render_tiles(lcd_control_reg);
@@ -442,7 +442,7 @@ void create_window() {
     // Setup our function pointers
     gladLoadGLLoader(SDL_GL_GetProcAddress);
 
-    printf("window:%p\n", window);
+    //printf("window:%p\n", window);
 }
 
 
@@ -480,7 +480,7 @@ void render_screen() {
                 0x00FF00,              // green mask
                 0xFF0000,              // blue mask
                 0);                    // alpha mask (none)
-    printf("window:%p\n", window);
+    //printf("window:%p\n", window);
     // printf("A\n");
     SDL_BlitSurface(surface, NULL, SDL_GetWindowSurface(window), NULL );
     //printf("B\n");
