@@ -304,8 +304,10 @@ void execute_inc(BYTE reg, BYTE n, WORD addr, bool isHL) {
     else set_reg_8(reg, res);
 }
 
-void execute_inc_rr(Register* reg) { // no flags need to be set off
-    (*reg).wrd += 1;
+void execute_inc_rr(BYTE reg_num) { // no flags need to be set off
+    WORD res = get_reg_value_16(reg_num);
+    res++;
+    set_reg_16(reg_num, res);
 }
 
 void execute_dec(BYTE reg, BYTE n, WORD addr, bool isHL) {
@@ -317,8 +319,10 @@ void execute_dec(BYTE reg, BYTE n, WORD addr, bool isHL) {
     else set_reg_8(reg, res);
 }
 
-void execute_dec_rr(Register* reg) { // no flags need to be set off
-    (*reg).wrd -= 1;
+void execute_dec_rr(BYTE reg_num) { // no flags need to be set off
+    WORD res = get_reg_value_16(reg_num);
+    res--;
+    set_reg_16(reg_num, res);
 }
 
 void execute_daa() {
@@ -415,7 +419,7 @@ bool check_flag(BYTE val) {
 
 WORD sign_extend(BYTE num) {
     WORD res = (WORD) num;
-    if(num & 0x10)
+    if(num & 0b10000000)
         res = res | 0xff00;
     return res;
 }
@@ -1020,12 +1024,12 @@ int execute_opcode(BYTE op) {
     } else if ((op & inc_rr_mask) == 0b000000011) {
         //printf("inc rr\n");
         reg_num = (op >> 4) & 0b11;
-        execute_inc_rr(get_register(reg_num));
+        execute_inc_rr(reg_num);
         return 8;
     } else if ((op & dec_rr_mask) == 0b00001011) {
         //printf("dec rr\n");
         reg_num = (op >> 4) & 0b11;
-        execute_dec_rr(get_register(reg_num));
+        execute_dec_rr(reg_num);
         return 8;
     } else if ((op & add_HL_rr_mask) == 0b00001001) {
         //printf("add HL rr\n");
@@ -1128,11 +1132,14 @@ int execute_next_opcode() {
         }
         printf("pc: %0X\n", program_counter);
         printf("opcode: %0X\n", opcode);
-        if (program_counter >= 0x100 && x < 10) {
-            myfile << "pc: " << program_counter << "\n";
-            myfile << "opcode: " << opcode << "\n";
-            x++;
-        }
+
+        myfile << "pc: " << std::hex << program_counter << "\n";
+        myfile << "opcode: " << std::hex << (int)opcode << "\n";
+        // if (program_counter >= 0x100 && x < 10) {
+        //     myfile << "pc: " << program_counter << "\n";
+        //     myfile << "opcode: " << opcode << "\n";
+        //     x++;
+        // }
         program_counter++;
         int cycles = execute_opcode(opcode);
         check_interrupt_enable();
