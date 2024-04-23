@@ -112,7 +112,7 @@ void set_reg_8(BYTE reg, BYTE val) {
             break;
         case 1 : // C
             reg_BC.lo = val;
-            // printf("C = %x\n", reg_BC.lo);
+            //printf("C = %x\n", reg_BC.lo);
             break;
         case 2 : // D
             reg_DE.hi = val;
