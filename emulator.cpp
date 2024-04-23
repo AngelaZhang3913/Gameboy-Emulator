@@ -1,6 +1,8 @@
 #include "emulator.h"
 #include "interrupts.h"
 #include "graphics.h"
+#include <fstream>
+using namespace std;
 
 int intrpt_next_inst = -1;
 bool en_interrupt = 0;
@@ -1107,6 +1109,16 @@ void check_interrupt_enable() {
     }
 }
 
+ofstream myfile;
+
+void makefile() {
+    myfile.open("opcodes.txt");
+}
+
+void closefile() {
+    myfile.close();
+}
+
 int execute_next_opcode() {
     // returns the number of cycles for the instruction
     if(!halt) {
@@ -1116,9 +1128,9 @@ int execute_next_opcode() {
         }
         printf("pc: %0X\n", program_counter);
         printf("opcode: %0X\n", opcode);
-        if (x < 10) {
-            //printf("pc: %0X\n", program_counter);
-            //printf("opcode: %0X\n", opcode);
+        if (program_counter >= 0x100 && x < 10) {
+            myfile << "pc: " << program_counter << "\n";
+            myfile << "opcode: " << opcode << "\n";
             x++;
         }
         program_counter++;

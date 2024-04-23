@@ -33,6 +33,8 @@ int main(int argc, char* argv[]){
 
     load_game_method();
 
+    makefile();
+
     create_window();
 
     // Infinite loop for our application
@@ -121,6 +123,8 @@ int main(int argc, char* argv[]){
     SDL_Delay(3000);
     // our program.
     SDL_Quit();
+
+    closefile();
     return 0;
 }
 
