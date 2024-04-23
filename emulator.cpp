@@ -800,14 +800,14 @@ int execute_opcode(BYTE op) {
             //printf("add SP, dd\n");
             val = read_memory(program_counter);
             program_counter++;
-            stack_pointer.wrd += val;
+            stack_pointer.wrd += sign_extend(val);
             return 16;
         
         case 0xF8 : // ld HL, SP+dd
             //printf("ld HL, SP+dd\n");
             val = read_memory(program_counter);
             program_counter++;
-            reg_HL.wrd = stack_pointer.wrd + val;
+            reg_HL.wrd = stack_pointer.wrd + sign_extend(val);
             return 12;
         
         // ROTATE AND SHIFT
@@ -1114,13 +1114,13 @@ int execute_next_opcode() {
         if (program_counter == 0x101) {
             //printf("cartridge: %0x\n", cartridge_memory[0x101]);
         }
-        printf("pc: %0X\n", program_counter);
-        printf("opcode: %0X\n", opcode);
-        if (x < 10) {
-            //printf("pc: %0X\n", program_counter);
-            //printf("opcode: %0X\n", opcode);
-            x++;
-        }
+        // printf("pc: %0X\n", program_counter);
+        // printf("opcode: %0X\n", opcode);
+        // if (x < 10) {
+            // printf("pc: %0X\n", program_counter);
+            // printf("opcode: %0X\n", opcode);
+        //     x++;
+        // }
         program_counter++;
         int cycles = execute_opcode(opcode);
         check_interrupt_enable();
