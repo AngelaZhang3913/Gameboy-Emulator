@@ -1089,8 +1089,33 @@ int execute_opcode(BYTE op) {
         }
     } else if ((op & rst_n_mask) == 0b11000111) {
         //printf("rst n\n");
+        switch(op) {
+            case 0xC7 : 
+                val = 0;
+                break;
+            case 0xCF :
+                val = 0x8;
+                break;
+            case 0xD7 :
+                val = 0x10;
+                break;
+            case 0xDF :
+                val = 0x18;
+                break;
+            case 0xE7 :
+                val = 0x20;
+                break;
+            case 0xEF :
+                val = 0x28;
+                break;
+            case 0xF7 :
+                val = 0x30;
+                break;
+            case 0xFF :
+                val = 0x38;
+                break;
+        }
         push_word_onto_stack(program_counter);
-        val = (op >> 3) & 0b111;
         program_counter = val;
         return 16;
     }
@@ -1130,14 +1155,12 @@ int execute_next_opcode() {
         if (program_counter == 0x101) {
             //printf("cartridge: %0x\n", cartridge_memory[0x101]);
         }
-        printf("pc: %0X\n", program_counter);
-        printf("opcode: %0X\n", opcode);
+        // printf("pc: %0X\n", program_counter);
+        // printf("opcode: %0X\n", opcode);
 
         myfile << "pc: " << std::hex << program_counter << "\n";
-        myfile << "opcode: " << std::hex << (int)opcode << "\n";
-        if (is_lcd_enabled()) {
-            myfile << "lcd enabled" << std::hex << (int)opcode << "\n";
-        }
+        //myfile << "opcode: " << std::hex << (int)opcode << "\n";
+        myfile << "lcd enabled" << std::hex << " " << (int)read_memory(0xFF40) << "\n";
         // if (program_counter >= 0x100 && x < 10) {
         //     myfile << "pc: " << program_counter << "\n";
         //     myfile << "opcode: " << opcode << "\n";
