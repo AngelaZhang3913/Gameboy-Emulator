@@ -112,8 +112,7 @@ BYTE read_memory(WORD address) {
         return ram_banks[address - 0xA000 + current_ram_bank * 0x4000];
     } else if (address == 0xFF00) {
         // return joypad state
-        // return get_joypad_state();
-        return 0;
+        return get_joypad_state();
     } else {
         return rom[address];
     }
