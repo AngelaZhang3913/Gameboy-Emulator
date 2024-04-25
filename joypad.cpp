@@ -64,6 +64,6 @@ BYTE get_joypad_state() {
         result &= bottom_jp; // returns pressed buttons
     }
 
-    printf("result: %0X", result);
+    //printf("result: %0X", result);
     return result;
 }

@@ -114,10 +114,27 @@ BYTE read_memory(WORD address) {
     } else if (address == 0xFF00) {
         // return joypad state
         //printf("jp FF");
-        return 0xFF;
+        //return 0xFF;
         /*BYTE jp = get_joypad_state();
         printf("jp %X", jp);
         return jp;*/
+        BYTE result = rom[0xFF00];
+        result ^= 0xFF; // flip bits
+
+        if (!((result >> 4) & 1)) {
+            // standard buttons
+            BYTE top_jp = joypad_state >> 4; // standard buttons in top nibble
+            top_jp |= 0xF0; // turn on top 4 bits
+            result &= top_jp; // returns pressed buttons
+        } else if (!((result >> 5) & 1)) {
+            // directional buttons
+            BYTE bottom_jp = joypad_state & 0xF; // directional buttons in bottom nibble
+            bottom_jp |= 0xF0 ; // turn on top 4 bits
+            result &= bottom_jp; // returns pressed buttons
+        }
+
+        //printf("result: %0X", result);
+        return result;
         //return get_joypad_state();
     } else {
         return rom[address];
