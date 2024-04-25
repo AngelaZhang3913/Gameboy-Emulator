@@ -7,20 +7,24 @@ void request_interrupt(int id) {
     // add comments
     BYTE request = read_memory(0xFF0F);
     request = bitset(request, id);
-    write_memory(0xFF0F, id);
+    write_memory(0xFF0F, request);
 }
 
 void do_interrupts() {
     if (interrupt_switch) {
+        //printf("interrupt_switch\n");
         BYTE request = read_memory(0xFF0F);
         BYTE enabled = read_memory(0xFFFF);
         // checks for any pending interrupts
         if (request > 0) {
             // checks interrupts in their priority order
             for (int i = 0; i < 5; i++) {
-                if (test_bit(request,i) && test_bit(enabled, i)) {
-                    // executes the interrupt
-                    sevice_interrupt(i);
+                if (test_bit(request,i)) {
+                    printf("request enabled\n");
+                    if (test_bit(enabled, i)) {
+                        // executes the interrupt
+                        sevice_interrupt(i);
+                    }
                 }
             }
         }
@@ -28,6 +32,7 @@ void do_interrupts() {
 }
 
 void sevice_interrupt(int id) {
+    printf("service interupt: id %d\n", id);
     interrupt_switch = false;
     BYTE request = read_memory(0xFF0F);
     request = bitreset(request, id); // IS THIS CORRECT??

@@ -299,7 +299,7 @@ void render_tiles(BYTE lcd_control_reg) {
 }
 
 void render_sprites(BYTE lcd_control_reg) {
-    printf("render sprites, pc = %x\n", program_counter);
+    //printf("render sprites, pc = %x\n", program_counter);
     myfile << "RENDER SPRITES" << "\n";
 
     for (int sprite = 0 ; sprite < 40; sprite++) {
@@ -436,6 +436,7 @@ void update_graphics(int cycles) {
 
         if (current_scanline == 144) {
             // vertical blank
+            printf("vertical blank\n");
             request_interrupt(0);
         } else if (current_scanline >= 153) {
             // reset scan line

@@ -5,7 +5,7 @@
 #include "hardware.h"
 #include "interrupts.h"
 
-BYTE joypad_state;
+BYTE joypad_state = 0xFF;
 
 void key_pressed(int key) {
     // 0 represents pressed key; 1 represented unpressed key

@@ -6,6 +6,7 @@ using namespace std;
 
 int intrpt_next_inst = -1;
 bool en_interrupt = 0;
+bool disen_interrupt = 0;
 
 int x;
 
@@ -854,13 +855,13 @@ int execute_opcode(BYTE op) {
         case 0xF3 : // di
             //printf("di\n");
             // disables interrupts after 1 instruction delay
-            intrpt_next_inst = 0;
-            en_interrupt = 0;
+            // intrpt_next_inst = 0;
+            disen_interrupt = 1;
             return 4;
         case 0xFB : // ei
             //printf("ei\n");
             // enable interrupts after 1 instruction delay
-            intrpt_next_inst = 0;
+            //intrpt_next_inst = 0;
             en_interrupt = 1;
             return 4;
             
@@ -892,7 +893,7 @@ int execute_opcode(BYTE op) {
             // enable interrupts
             en_interrupt = 1;
             intrpt_next_inst = 0;
-            return 16;
+            return 8;
         
         case 0xE9 : // jp HL
             //printf("jp HL\n");
@@ -1124,18 +1125,35 @@ int execute_opcode(BYTE op) {
 
 void check_interrupt_enable() {
     // enables the interrupt swtich if the previous inst was EI/DI
-    if (intrpt_next_inst == 1) {
-        if (en_interrupt) {
-            interrupt_switch = 1;
-        } else {
+    
+    if (disen_interrupt) {
+        if (read_memory(program_counter - 1) != 0xF3) {
+            // if the last intstruction was not disable interrupts - creates 1-inst delay
+            disen_interrupt = 0;
             interrupt_switch = 0;
         }
-        intrpt_next_inst = -1;
-    } else if (intrpt_next_inst == 0) {
-        intrpt_next_inst = 1;
-    } else {
-        intrpt_next_inst = -1; // no enable/disable
     }
+    if (en_interrupt) {
+        if (read_memory(program_counter - 1) != 0xFB) {
+            // if the last intstruction was not enable interrupts - creates 1-inst delay
+            en_interrupt = 0;
+            interrupt_switch = 1;
+        }
+    } 
+
+
+    // if (intrpt_next_inst == 1) {
+    //     if (en_interrupt) {
+    //         interrupt_switch = 1;
+    //     } else {
+    //         interrupt_switch = 0;
+    //     }
+    //     intrpt_next_inst = -1;
+    // } else if (intrpt_next_inst == 0) {
+    //     intrpt_next_inst = 1;
+    // } else {
+    //     intrpt_next_inst = -1; // no enable/disable
+    // }
 }
 
 extern ofstream myfile;
