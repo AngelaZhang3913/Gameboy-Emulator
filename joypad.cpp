@@ -53,12 +53,12 @@ BYTE get_joypad_state() {
     result ^= 0xFF; // flip bits
 
     if (!test_bit(result, 4)) {
-        // standard buttons
+        // directional buttons
         BYTE top_jp = joypad_state >> 4; // standard buttons in top nibble
         top_jp |= 0xF0; // turn on top 4 bits
         result &= top_jp; // returns pressed buttons
     } else if (!test_bit(result, 5)) {
-        // directional buttons
+        // standard buttons
         BYTE bottom_jp = joypad_state & 0xF; // directional buttons in bottom nibble
         bottom_jp |= 0xF0 ; // turn on top 4 bits
         result &= bottom_jp; // returns pressed buttons

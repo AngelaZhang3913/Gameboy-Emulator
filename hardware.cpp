@@ -60,6 +60,9 @@ BYTE game_memory[0x80000];
 bool enable_ram;
 bool rom_banking;
 
+ofstream myfile;
+ofstream screen_file;
+
 /* -------------
      MEMORY
  ------------- */
@@ -118,8 +121,13 @@ BYTE read_memory(WORD address) {
         /*BYTE jp = get_joypad_state();
         printf("jp %X", jp);
         return jp;*/
+        // myfile << "jp FF" << "\n";
         BYTE result = rom[0xFF00];
         result ^= 0xFF; // flip bits
+
+        // if (program_counter >= 0x39f) {
+        //     printf("AFTER THE CREDITS PLEASE PRINT\n");
+        // }
 
         if (!((result >> 4) & 1)) {
             // standard buttons
@@ -150,8 +158,6 @@ void dma_transfer(BYTE data) {
     }
 }
 
-ofstream myfile;
-ofstream screen_file;
 void write_memory(WORD address, BYTE data) {
     // if(address == 0xFF01) 
     //     printf("data = %x\n", data);
@@ -159,11 +165,17 @@ void write_memory(WORD address, BYTE data) {
 		printf("hi %c\n", read_memory(0xFF01));
     }
 
-    // if (address == 0xFF40) {
-    //     printf("ADDRESS IS FF40\n");
-    //     printf("pc = %x, writing %0X\n", program_counter, data);
-    //     if(!((data >> 7) & 1)) printf("disabled lcd\n");
-    // }
+    if (address == 0xFF00) {
+        printf("ADDRESS IS FF00\n");
+        printf("pc = %x, writing %0X\n", program_counter, data);
+        // if(!((data >> 7) & 1)) printf("disabled lcd\n");
+    }
+
+    if (address == 0xFF81) {
+        printf("ADDRESS IS FF81\n");
+        printf("pc = %x, writing %0X\n", program_counter, data);
+        // if(!((data >> 7) & 1)) printf("disabled lcd\n");
+    }
 
     // printf("WRITING TO MEMORY %0X\n", address);
 
@@ -182,11 +194,7 @@ void write_memory(WORD address, BYTE data) {
         write_memory(address-0x2000, data) ;
     } else if (address >= 0xFEA0 && address < 0xFEFF) {
         // restricted - don't edit
-    } 
-    else if(address == 0xFF00) {
-        
-    }
-    else if (address == 0xFF04) {
+    } else if (address == 0xFF04) {
         // divider register is restricted (don't edit)
         rom[0xFF04] = 0 ;
     } else if (address == TMC) {
