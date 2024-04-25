@@ -1138,14 +1138,17 @@ void check_interrupt_enable() {
     }
 }
 
-ofstream myfile;
+extern ofstream myfile;
+extern ofstream screen_file;
 
 void makefile() {
     myfile.open("opcodes.txt");
+    screen_file.open("screen_file.txt");
 }
 
 void closefile() {
     myfile.close();
+    screen_file.close();
 }
 
 int execute_next_opcode() {

@@ -3,6 +3,7 @@
 #include "joypad.h"
 #include <cstring>
 #include <iostream>
+#include <fstream>
 using namespace std;
 
 Register reg_AF = {0x01B0};
@@ -127,11 +128,20 @@ void dma_transfer(BYTE data) {
     }
 }
 
+ofstream myfile;
+ofstream screen_file;
 void write_memory(WORD address, BYTE data) {
-    if (address == 0xFF40) {
-        printf("ADDRESS IS FF40\n");
-        printf("writing %0X\n", data);
+    // if(address == 0xFF01) 
+    //     printf("data = %x\n", data);
+    if (address == 0xFF02 && data == 0x81) {
+		printf("hi %c\n", read_memory(0xFF01));
     }
+
+    // if (address == 0xFF40) {
+    //     printf("ADDRESS IS FF40\n");
+    //     printf("pc = %x, writing %0X\n", program_counter, data);
+    //     if(!((data >> 7) & 1)) printf("disabled lcd\n");
+    // }
 
     // printf("WRITING TO MEMORY %0X\n", address);
 
@@ -150,7 +160,11 @@ void write_memory(WORD address, BYTE data) {
         write_memory(address-0x2000, data) ;
     } else if (address >= 0xFEA0 && address < 0xFEFF) {
         // restricted - don't edit
-    } else if (address == 0xFF04) {
+    } 
+    else if(address == 0xFF00) {
+        
+    }
+    else if (address == 0xFF04) {
         // divider register is restricted (don't edit)
         rom[0xFF04] = 0 ;
     } else if (address == TMC) {
@@ -170,8 +184,12 @@ void write_memory(WORD address, BYTE data) {
         dma_transfer(data);
     } else {
         // no restriction
-        if(address >= 0x8000 && address <= 0x97ff)
-            printf("address = %x, data = %x\n", address, data);
+        if(address >= 0x8000) {
+            //printf("pc = %x, address = %x, data = %x\n", program_counter, address, data);
+            myfile << "de = " << hex << (int)reg_DE.wrd << "\n";
+            // myfile << "(de) = " << hex << (int)read_memory(reg_DE.wrd) << "\n";
+            myfile << "writing to " << hex << address << ", data = " << hex << (int)data << "\n";
+        }
         rom[address] = data;
     }
 }

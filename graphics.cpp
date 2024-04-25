@@ -4,7 +4,6 @@
 #include "graphics.h"
 #include <iostream>
 
-
 enum COLOR { WHITE, LIGHT_GREY, DARK_GREY, BLACK};
 
 int scanline_counter = 456; // when to move on to the next line
@@ -79,6 +78,9 @@ BYTE screen_data[144][160][3] ;
 */
 
 bool lcd_enable = false;
+extern std::ofstream myfile;
+extern std::ofstream screen_file;
+
 bool is_lcd_enabled() {
     BYTE lcd_val = read_memory(0xFF40);
     lcd_enable = test_bit(read_memory(0xFF40), 7);
@@ -170,14 +172,22 @@ COLOR get_color(BYTE num_color, WORD address) {
 }
 
 void render_tiles(BYTE lcd_control_reg) {
-    //printf("render tiles\n");
-    WORD tile_data = 0 ;
-    WORD background_memory = 0 ;
-    bool unsign = true ;
+    // if(program_counter >= 0x100) {
+    //     for(int i = 0x8000; i < 0x8010; i++) {
+    //         if(i % 2 == 0) write_memory((WORD)i, 0xFF);
+    //         else write_memory((WORD)i, 0x00);
+    //     }
+    // }
 
-    BYTE scrollY = read_memory(0xFF42) ;
-    BYTE scrollX = read_memory(0xFF43) ;
-    BYTE windowY = read_memory(0xFF4A) ;
+    //printf("render tiles, pc = %x\n", program_counter);
+    myfile << "RENDER TILES" << "\n";
+    WORD tile_data = 0;
+    WORD background_memory = 0;
+    bool unsign = true;
+
+    BYTE scrollY = read_memory(0xFF42);
+    BYTE scrollX = read_memory(0xFF43);
+    BYTE windowY = read_memory(0xFF4A);
     BYTE windowX = read_memory(0xFF4B) - 7;
 
     bool in_window = false;
@@ -186,7 +196,7 @@ void render_tiles(BYTE lcd_control_reg) {
         // check that the window is enabled
         if (windowY <= read_memory(0xFF44)) {
             // check that the current scan line is within the window
-            in_window = true ;
+            in_window = true;
         }
     }
 
@@ -194,8 +204,8 @@ void render_tiles(BYTE lcd_control_reg) {
     if (test_bit(lcd_control_reg, 4)) {
         tile_data = 0x8000;
     } else {
-        tile_data = 0x8800 ;
-        unsign = false ;
+        tile_data = 0x8800;
+        unsign = false;
     }
 
     // set the background memory
@@ -206,10 +216,13 @@ void render_tiles(BYTE lcd_control_reg) {
     }
 
     BYTE y_position = in_window ? read_memory(0xFF44) - windowY : scrollY + read_memory(0xFF44);
+    myfile << "y_position = " << (int)y_position << "\n";
+    myfile << "scanline = " << std::hex << (int)read_memory(0xFF44) << "\n";
 
     WORD tile_row = (((BYTE)(y_position/8))*32) ;
 
     // draw pixels for this scanline
+    bool printed = false;
     for (int x = 0 ; x < 160; x++) {
         BYTE x_position = x + scrollX ;
 
@@ -222,15 +235,19 @@ void render_tiles(BYTE lcd_control_reg) {
 
         // determine which tile this pixel is in
         WORD tile_col = (x_position/8) ;
-        WORD tile_address = background_memory + tile_row + tile_col;      
+        WORD tile_address = background_memory + tile_row + tile_col;
         SIGNED_WORD tile_num = unsign ? (BYTE)read_memory(tile_address) : (SIGNED_BYTE) read_memory(tile_address);
 
         WORD tile_location = unsign ? tile_data + tile_num * 16 : tile_data + (tile_num + 128) * 16;
 
-        // determine the vertical location (each vertical line )
+        // determine the vertical location (each vertical line)
         BYTE line = (y_position % 8) * 2;
         BYTE data1 = read_memory(tile_location + line);
         BYTE data2 = read_memory(tile_location + line + 1);
+
+        // if (tile_location + line > 0x8000 && tile_location + line < 0x8010) {
+        //     myfile << "reading from modified section" << "\n";
+        // }
 
         // pixel 0 = bit 7, pixel 1 = bit 6, etc
         int color_bit = ((x_position % 8) - 7) * -1 ;
@@ -250,19 +267,40 @@ void render_tiles(BYTE lcd_control_reg) {
                   color == LIGHT_GREY ? 0xCC :
                   color == DARK_GREY ? 0x77 :
                   0;
+        
+        if(color != WHITE) {
+            myfile << "tile address = " << std::hex << (int)tile_address << "\n";
+            myfile << "tile # = " << std::dec << (int)tile_num << "\n";
+            myfile << "location = " << std::hex << (int)(tile_location + line) << "\n";
+            myfile << "data 1 = " << std::hex << (int)data1 << " data 2 = " << std::hex << (int)data2 << "\n";
+        }
 
         int y = read_memory(0xFF44);
 
         if ((y >= 0) && (y < 144) && (x >= 0) && (x < 160)) {
+            if(!printed) {
+                myfile << "update data tile" << "\n";
+                printed = true;
+            }
             screen_data[y][x][0] = red;
             screen_data[y][x][1] = green;
             screen_data[y][x][2] = blue;
+            /*if (program_counter > 0x100) {
+                screen_data[y][x][0] = 255;
+                screen_data[y][x][1] = 0;
+                screen_data[y][x][2] = 0;
+            } else {
+                screen_data[y][x][0] = red ;
+                screen_data[y][x][1] = green ;
+                screen_data[y][x][2] = blue ;
+            }*/
         }
     }
 }
 
 void render_sprites(BYTE lcd_control_reg) {
-    //printf("Attempting to render a sprite\n");
+    printf("render sprites, pc = %x\n", program_counter);
+    myfile << "RENDER SPRITES" << "\n";
 
     for (int sprite = 0 ; sprite < 40; sprite++) {
 
@@ -344,20 +382,28 @@ void render_sprites(BYTE lcd_control_reg) {
                 // check in bounds
                 int y = read_memory(0xFF44);
                 if ((y >= 0) && (y < 144) && (x >= 0) && (x < 160)) {
-                    continue ;
+                    screen_data[y][x][0] = red ;
+                    screen_data[y][x][1] = green ;
+                    screen_data[y][x][2] = blue ;
+                    /*
+                    if (program_counter > 0x100) {
+                        screen_data[y][x][0] = 255;
+                        screen_data[y][x][1] = 0;
+                        screen_data[y][x][2] = 0;
+                    } else {
+                        screen_data[y][x][0] = red ;
+                        screen_data[y][x][1] = green ;
+                        screen_data[y][x][2] = blue ;
+                    }*/
                 }
-
-                screen_data[y][x][0] = red ;
-                screen_data[y][x][1] = green ;
-                screen_data[y][x][2] = blue ;
             }
         }
     }
 }
 
 void draw_scanline() {
-    //printf("draw_scanline\n");
     BYTE lcd_control_reg = read_memory(0xFF40);
+    //printf("draw scanline, pc = %x, lcd = %x\n", program_counter, lcd_control_reg);
     if (test_bit(lcd_control_reg, 0)) {
         render_tiles(lcd_control_reg);
     }
@@ -375,7 +421,7 @@ void update_graphics(int cycles) {
     if (is_lcd_enabled()) {
         scanline_counter -= cycles;
     } else {
-        printf("lcd not enabled\n");
+        //printf("lcd not enabled\n");
         return;
     }
 
@@ -450,17 +496,27 @@ void create_window() {
     ////printf("window:%p\n", window);
 }
 
-
+int render_count;
 void print_screen_data() {
+    screen_file << "RENDER " << render_count << "\n";
     for (int i = 0; i < 144; i++) {
+        bool printed = false;
         for (int j = 0; j < 160; j++) {
+            if(screen_data[i][j][0] != 255 || screen_data[i][j][1] != 255 || screen_data[i][j][2] != 255) {
+                screen_file << i << ", " << j << " " << (int)screen_data[i][j][0] << " ";
+                screen_file << (int)screen_data[i][j][1] << " ";
+                screen_file << (int)screen_data[i][j][2] << " | ";
+                printed = true;
+            }
             //printf("%d", screen_data[i][j][0]);
             //printf("%d", screen_data[i][j][1]);
             //printf("%d ", screen_data[i][j][2]);
             //printf("| ");
         }
+        if(printed) screen_file << "\n";
         //printf("\n");
     }
+    screen_file << "\n";
 }
 
 void set_screen_data() {
@@ -483,6 +539,8 @@ void set_screen_data() {
 void render_screen() {
     //set_screen_data();
     //print_screen_data();
+    myfile << "RENDER SCREEN " << render_count << "\n";
+    render_count++;
     SDL_Surface *surface = SDL_CreateRGBSurfaceFrom((void*)screen_data,
                 WIDTH,
                 HEIGHT,
