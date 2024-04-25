@@ -112,7 +112,8 @@ BYTE read_memory(WORD address) {
         return ram_banks[address - 0xA000 + current_ram_bank * 0x4000];
     } else if (address == 0xFF00) {
         // return joypad state
-        return get_joypad_state();
+        return 0xFF;
+        //return get_joypad_state();
     } else {
         return rom[address];
     }
@@ -185,7 +186,7 @@ void write_memory(WORD address, BYTE data) {
         // no restriction
         if(address >= 0x8000) {
             //printf("pc = %x, address = %x, data = %x\n", program_counter, address, data);
-            myfile << "de = " << hex << (int)reg_DE.wrd << "\n";
+            // myfile << "de = " << hex << (int)reg_DE.wrd << "\n";
             // myfile << "(de) = " << hex << (int)read_memory(reg_DE.wrd) << "\n";
             myfile << "writing to " << hex << address << ", data = " << hex << (int)data << "\n";
         }
