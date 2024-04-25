@@ -65,28 +65,73 @@ int main(int argc, char* argv[]){
             if (event.type == SDL_KEYDOWN) {
                 switch (event.key.keysym.sym) {
                     case SDLK_RIGHT:
+                        printf("right\n");
                         key_pressed(0);
                         break;
                     case SDLK_LEFT:
+                        printf("left\n");
                         key_pressed(1);
                         break;
                     case SDLK_UP:
+                        printf("up\n");
                         key_pressed(2);
                         break;
                     case SDLK_DOWN:
+                        printf("down\n");
                         key_pressed(3);
                         break;
                     case SDLK_a:
+                        printf("a\n");
                         key_pressed(4);
                         break;
                     case SDLK_s:
+                        printf("s\n");
                         key_pressed(5);
                         break;
                     case SDLK_SPACE:
+                        printf("space\n");
                         key_pressed(6);
                         break;
                     case SDLK_RETURN:
+                        printf("return\n");
                         key_pressed(7);
+                        break;
+                }
+            }
+
+            if (event.type == SDL_KEYUP) {
+                switch (event.key.keysym.sym) {
+                    case SDLK_RIGHT:
+                        printf("right up\n");
+                        key_released(0);
+                        break;
+                    case SDLK_LEFT:
+                        printf("left up\n");
+                        key_released(1);
+                        break;
+                    case SDLK_UP:
+                        printf("up up\n");
+                        key_released(2);
+                        break;
+                    case SDLK_DOWN:
+                        printf("down up\n");
+                        key_released(3);
+                        break;
+                    case SDLK_a:
+                        printf("a up\n");
+                        key_released(4);
+                        break;
+                    case SDLK_s:
+                        printf("s up\n");
+                        key_released(5);
+                        break;
+                    case SDLK_SPACE:
+                        printf("space up\n");
+                        key_released(6);
+                        break;
+                    case SDLK_RETURN:
+                        printf("return up\n");
+                        key_released(7);
                         break;
                 }
             }

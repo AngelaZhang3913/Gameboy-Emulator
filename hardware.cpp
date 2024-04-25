@@ -17,6 +17,7 @@ Register stack_pointer = {0xFFFE};
 BYTE rom[0x10000];
 
 void initialize_rom() {
+    rom[0xFF00] = 0xFF;
     rom[0xFF05] = 0x00;
     rom[0xFF06] = 0x00;
     rom[0xFF07] = 0x00;

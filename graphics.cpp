@@ -436,7 +436,7 @@ void update_graphics(int cycles) {
 
         if (current_scanline == 144) {
             // vertical blank
-            printf("vertical blank\n");
+            //printf("vertical blank\n");
             request_interrupt(0);
         } else if (current_scanline >= 153) {
             // reset scan line

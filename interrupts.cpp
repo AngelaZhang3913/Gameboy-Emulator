@@ -20,7 +20,7 @@ void do_interrupts() {
             // checks interrupts in their priority order
             for (int i = 0; i < 5; i++) {
                 if (test_bit(request,i)) {
-                    printf("request enabled\n");
+                    //printf("request enabled\n");
                     if (test_bit(enabled, i)) {
                         // executes the interrupt
                         sevice_interrupt(i);
@@ -32,7 +32,7 @@ void do_interrupts() {
 }
 
 void sevice_interrupt(int id) {
-    printf("service interupt: id %d\n", id);
+    //printf("service interupt: id %d\n", id);
     interrupt_switch = false;
     BYTE request = read_memory(0xFF0F);
     request = bitreset(request, id); // IS THIS CORRECT??
