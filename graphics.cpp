@@ -21,8 +21,9 @@ char* pixels = new char[WIDTH * HEIGHT * channels];
 int WIDTH = 160;
 int HEIGHT = 144;
 
-
-BYTE screen_data[144][160][3] ;
+int resize = 4;
+BYTE screen_data[144*4][160*4][3] ;
+SDL_Surface *surface;
 
 /*
     00: H-Blank
@@ -282,18 +283,15 @@ void render_tiles(BYTE lcd_control_reg) {
                 myfile << "update data tile" << "\n";
                 printed = true;
             }
-            screen_data[y][x][0] = red;
-            screen_data[y][x][1] = green;
-            screen_data[y][x][2] = blue;
-            /*if (program_counter > 0x100) {
-                screen_data[y][x][0] = 255;
-                screen_data[y][x][1] = 0;
-                screen_data[y][x][2] = 0;
-            } else {
-                screen_data[y][x][0] = red ;
-                screen_data[y][x][1] = green ;
-                screen_data[y][x][2] = blue ;
-            }*/
+
+
+            for(int i = 0; i < resize; i++) {
+                for(int j = 0; j < resize; j++) {
+                    screen_data[y*resize +i][x*resize +j][0] = red;
+                    screen_data[y*resize +i][x*resize +j][1] = green;
+                    screen_data[y*resize +i][x*resize +j][2] = blue;
+                }
+            }
         }
     }
 }
@@ -382,19 +380,13 @@ void render_sprites(BYTE lcd_control_reg) {
                 // check in bounds
                 int y = read_memory(0xFF44);
                 if ((y >= 0) && (y < 144) && (x >= 0) && (x < 160)) {
-                    screen_data[y][x][0] = red ;
-                    screen_data[y][x][1] = green ;
-                    screen_data[y][x][2] = blue ;
-                    /*
-                    if (program_counter > 0x100) {
-                        screen_data[y][x][0] = 255;
-                        screen_data[y][x][1] = 0;
-                        screen_data[y][x][2] = 0;
-                    } else {
-                        screen_data[y][x][0] = red ;
-                        screen_data[y][x][1] = green ;
-                        screen_data[y][x][2] = blue ;
-                    }*/
+                    for(int i = 0; i < resize; i++) {
+                        for(int j = 0; j < resize; j++) {
+                            screen_data[y*resize +i][x*resize +j][0] = red;
+                            screen_data[y*resize +i][x*resize +j][1] = green;
+                            screen_data[y*resize +i][x*resize +j][2] = blue;
+                        }
+                    }
                 }
             }
         }
@@ -483,8 +475,8 @@ void create_window() {
     window = SDL_CreateWindow("C++ SDL2 Window",
             20,
             20,
-            WIDTH,
-            HEIGHT,
+            WIDTH*resize,
+            HEIGHT*resize,
             SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
 
     // OpenGL setup the graphics context
@@ -500,53 +492,53 @@ void create_window() {
 int render_count;
 void print_screen_data() {
     screen_file << "RENDER " << render_count << "\n";
-    for (int i = 0; i < 144; i++) {
+    for (int i = 0; i < 144*2; i++) {
         bool printed = false;
-        for (int j = 0; j < 160; j++) {
-            if(screen_data[i][j][0] != 255 || screen_data[i][j][1] != 255 || screen_data[i][j][2] != 255) {
-                screen_file << i << ", " << j << " " << (int)screen_data[i][j][0] << " ";
-                screen_file << (int)screen_data[i][j][1] << " ";
-                screen_file << (int)screen_data[i][j][2] << " | ";
-                printed = true;
-            }
-            //printf("%d", screen_data[i][j][0]);
-            //printf("%d", screen_data[i][j][1]);
-            //printf("%d ", screen_data[i][j][2]);
-            //printf("| ");
+        for (int j = 0; j < 160*2; j++) {
+            printf("%d", screen_data[i][j][0]);
+            printf("%d", screen_data[i][j][1]);
+            printf("%d ", screen_data[i][j][2]);
+            printf("| ");
         }
-        if(printed) screen_file << "\n";
-        //printf("\n");
+        printf("\n");
     }
-    screen_file << "\n";
 }
 
 void set_screen_data() {
     for (int i = 0; i < 72; i++) {
         for (int j = 0; j < 160; j++) {
-            screen_data[i][j][0] = 255;
-            screen_data[i][j][1] = 0;
-            screen_data[i][j][2] = 0;
+            for(int a = 0; a < 2; a++) {
+                for(int b = 0; b < 2; b++) {
+                    screen_data[i+a][j+b][0] = 255;
+                    screen_data[i+a][j+b][1] = 0;
+                    screen_data[i+a][j+b][2] = 0;
+                }
+            }
         }
     }
     for (int i = 72; i < 144; i++) {
         for (int j = 0; j < 160; j++) {
-            screen_data[i][j][0] = 0;
-            screen_data[i][j][1] = 255;
-            screen_data[i][j][2] = 0;
+            for(int a = 0; a < 2; a++) {
+                for(int b = 0; b < 2; b++) {
+                    screen_data[i+a][j+b][0] = 0;
+                    screen_data[i+a][j+b][1] = 255;
+                    screen_data[i+a][j+b][2] = 0;
+                }
+            }
         }
     }
 }
 
+bool printed = false;
 void render_screen() {
     //set_screen_data();
-    //print_screen_data();
     myfile << "RENDER SCREEN " << render_count << "\n";
     render_count++;
-    SDL_Surface *surface = SDL_CreateRGBSurfaceFrom((void*)screen_data,
-                WIDTH,
-                HEIGHT,
+    surface = SDL_CreateRGBSurfaceFrom((void*)screen_data,
+                WIDTH*resize,
+                HEIGHT*resize,
                 channels * 8,          // bits per pixel = 24
-                WIDTH * channels,      // pitch
+                WIDTH*resize * channels,      // pitch
                 0x0000FF,              // red mask
                 0x00FF00,              // green mask
                 0xFF0000,              // blue mask
@@ -555,5 +547,14 @@ void render_screen() {
     // //printf("A\n");
     SDL_BlitSurface(surface, NULL, SDL_GetWindowSurface(window), NULL );
     ////printf("B\n");
+    SDL_UpdateWindowSurface(window);
+}
+
+void resize_window() {
+    SDL_GetWindowSize(window, &WIDTH, &HEIGHT);
+    SDL_Surface *new_surface = SDL_GetWindowSurface(window);
+    uint32_t black = SDL_MapRGBA(new_surface->format, 0, 0, 0, 255);
+    SDL_FillRect(surface, NULL, black); 
+    SDL_BlitSurface(surface, NULL, new_surface, NULL);
     SDL_UpdateWindowSurface(window);
 }

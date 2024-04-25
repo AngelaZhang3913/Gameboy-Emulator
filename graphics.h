@@ -3,9 +3,10 @@
 #include <glad/glad.h>
 #include <fstream>
 
-extern BYTE screen_data[144][160][3] ;
+extern BYTE screen_data[144*4][160*4][3] ;
 extern void update_graphics(int cycles) ;
 extern void render_screen();
+extern void resize_window();
 
 extern int WIDTH;
 extern int HEIGHT;
