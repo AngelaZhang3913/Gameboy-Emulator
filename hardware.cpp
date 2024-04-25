@@ -17,7 +17,7 @@ Register stack_pointer = {0xFFFE};
 BYTE rom[0x10000];
 
 void initialize_rom() {
-    rom[0xFF00] = 0xFF;
+    rom[0xFF00] = 0x00;
     rom[0xFF05] = 0x00;
     rom[0xFF06] = 0x00;
     rom[0xFF07] = 0x00;
@@ -113,7 +113,11 @@ BYTE read_memory(WORD address) {
         return ram_banks[address - 0xA000 + current_ram_bank * 0x4000];
     } else if (address == 0xFF00) {
         // return joypad state
+        //printf("jp FF");
         return 0xFF;
+        /*BYTE jp = get_joypad_state();
+        printf("jp %X", jp);
+        return jp;*/
         //return get_joypad_state();
     } else {
         return rom[address];

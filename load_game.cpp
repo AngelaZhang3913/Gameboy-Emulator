@@ -18,5 +18,5 @@ void load_game_method() {
 
     initialize_rom();
 
-    //printf("hi%0X", read_memory(0x100));
+    printf("%0X", read_memory(0xFF00));
 }

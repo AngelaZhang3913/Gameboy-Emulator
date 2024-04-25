@@ -27,7 +27,7 @@ void key_pressed(int key) {
         standard_button = false;
     }
 
-    BYTE key_request = read_memory(0xFF00);
+    BYTE key_request = rom[0xFF00];
     bool req_interrupt = false;
 
     if (standard_button && !test_bit(key_request, 5)) {
@@ -49,7 +49,7 @@ void key_released(int key) {
 }
 
 BYTE get_joypad_state() {
-    BYTE result = read_memory(0xFF00);
+    BYTE result = rom[0xFF00];
     result ^= 0xFF; // flip bits
 
     if (!test_bit(result, 4)) {
@@ -64,5 +64,6 @@ BYTE get_joypad_state() {
         result &= bottom_jp; // returns pressed buttons
     }
 
+    printf("result: %0X", result);
     return result;
 }
