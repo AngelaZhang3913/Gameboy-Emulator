@@ -77,7 +77,7 @@ BYTE get_reg_value_8(BYTE bits) {
     return 0;
 }
 
-WORD get_reg_value_16(BYTE bits) {
+WORD get_reg_value_16(BYTE bits, bool isIncDec) {
     switch(bits) {
         case 0 : // BC
             return reg_BC.wrd;
@@ -86,7 +86,11 @@ WORD get_reg_value_16(BYTE bits) {
         case 2 : // HL
             return reg_HL.wrd;
         case 3 : // SP
-            return stack_pointer.wrd;
+            if (isIncDec) {
+                return stack_pointer.wrd;
+            } else {
+                return reg_AF.wrd;
+            }            
     }
     return 0;
 }
@@ -135,7 +139,7 @@ void set_reg_8(BYTE reg, BYTE val) {
     }
 }
 
-void set_reg_16(BYTE reg, WORD val) {
+void set_reg_16(BYTE reg, WORD val, bool isIncDec) {
     switch(reg) {
         case 0 : // BC
             reg_BC.wrd = val;
@@ -147,7 +151,12 @@ void set_reg_16(BYTE reg, WORD val) {
             reg_HL.wrd = val;
             break;
         case 3 : // SP
-            stack_pointer.wrd = val;
+            if (isIncDec) {
+                stack_pointer.wrd = val;
+            } else {
+                reg_AF.wrd = val;
+            }
+            
             break;
     }
 }
@@ -306,24 +315,24 @@ void execute_inc(BYTE reg, BYTE n, WORD addr, bool isHL) {
 }
 
 void execute_inc_rr(BYTE reg_num) { // no flags need to be set off
-    WORD res = get_reg_value_16(reg_num);
+    WORD res = get_reg_value_16(reg_num, true);
     res++;
-    set_reg_16(reg_num, res);
+    set_reg_16(reg_num, res, true);
 }
 
 void execute_dec(BYTE reg, BYTE n, WORD addr, bool isHL) {
     BYTE res = n - 1;
     set_flag(FLAG_Z, res == 0);
-    set_flag(FLAG_S, 0);
+    set_flag(FLAG_S, 1);
     set_flag(FLAG_H, (n & 0b1111) == 0);
     if (isHL) write_memory(addr, res);
     else set_reg_8(reg, res);
 }
 
 void execute_dec_rr(BYTE reg_num) { // no flags need to be set off
-    WORD res = get_reg_value_16(reg_num);
+    WORD res = get_reg_value_16(reg_num, true);
     res--;
-    set_reg_16(reg_num, res);
+    set_reg_16(reg_num, res, true);
 }
 
 void execute_daa() {
@@ -684,7 +693,7 @@ int execute_opcode(BYTE op) {
         // 16 BIT LOAD (total 4)
         case 0xF9 : // ld SP, HL
             //printf("ld SP, HL\n");
-            set_reg_16(3, reg_HL.wrd);
+            set_reg_16(3, reg_HL.wrd, false);
             return 8;
         
         /* 8 BIT ARITHMETIC/LOGICAL */
@@ -957,18 +966,19 @@ int execute_opcode(BYTE op) {
         program_counter++;
         val_16 = (second << 8) | first;
         reg_num = (op >> 4) & 0b11;
-        set_reg_16(reg_num, val_16);
+        set_reg_16(reg_num, val_16, true);
         return 12;
     } else if ((op & push_rr_mask) == 0b11000101) {
         //printf("push rr\n");
-        val_16 = get_reg_value_16((op >> 4) & 0b11);
+        reg_num = (op >> 4) & 0b11;
+        val_16 = get_reg_value_16(reg_num, false);
         push_word_onto_stack(val_16);
         return 16;
     } else if ((op & pop_rr_mask) == 0b11000001) {
-        //printf("pop rr\n");
+        //printf("pop rr\n")
         val_16 = pop_word_from_stack();
         reg_num = (op >> 4) & 0b11;
-        set_reg_16(reg_num, val_16);
+        set_reg_16(reg_num, val_16, false);
         return 12;
     } else if ((op & add_A_r_mask) == 0b10000000) {
         //printf("add A r\n");
@@ -1158,10 +1168,12 @@ void check_interrupt_enable() {
 
 extern ofstream myfile;
 extern ofstream screen_file;
+extern ofstream doctorlog;
 
 void makefile() {
     myfile.open("opcodes.txt");
     screen_file.open("screen_file.txt");
+    doctorlog.open("doc.txt");
 }
 
 void closefile() {
@@ -1182,14 +1194,33 @@ int execute_next_opcode() {
         myfile << "pc: " << std::hex << program_counter << "\n";
         //myfile << "opcode: " << std::hex << (int)opcode << "\n";
         myfile << "lcd enabled" << std::hex << " " << (int)read_memory(0xFF40) << "\n";
-        // if (program_counter >= 0x100 && x < 10) {
-        //     myfile << "pc: " << program_counter << "\n";
-        //     myfile << "opcode: " << opcode << "\n";
+        // if (program_counter == 0x100) {
+        //     printf("PC: %x\n", program_counter);
+        //     printf("OPCODE: %x\n", opcode);
         //     x++;
         // }
+        doctorlog << "A:" << std::setfill('0') << std::hex << std::setw(2) << (int)reg_AF.hi 
+          << " F:" << std::hex << std::setw(2) << (int)reg_AF.lo 
+          << " B:" << std::hex << std::setw(2) << (int)reg_BC.hi 
+          << " C:" << std::hex << std::setw(2) << (int)reg_BC.lo 
+          << " D:" << std::hex << std::setw(2) << (int)reg_DE.hi 
+          << " E:" << std::hex << std::setw(2) << (int)reg_DE.lo 
+          << " H:" << std::hex << std::setw(2) << (int)reg_HL.hi 
+          << " L:" << std::hex << std::setw(2) << (int)reg_HL.lo 
+          << " SP:" << std::hex << std::setw(4) << (int)stack_pointer.wrd 
+          << " PC:" << std::hex << std::setw(4) << (int)(program_counter) 
+          << " PCMEM:" << std::hex << std::setw(2) << (int)read_memory(program_counter) 
+          << "," << std::hex << std::setw(2) << (int)read_memory(program_counter + 1) 
+          << "," << std::hex << std::setw(2) << (int)read_memory(program_counter + 2) 
+          << "," << std::hex << std::setw(2) << (int)read_memory(program_counter + 3) 
+          << "\n"; 
+        if (program_counter == 0xC17C) {
+            printf("PC: %x\n", program_counter);
+            printf("OPCODE: %x\n", opcode);
+        }
         program_counter++;
         int cycles = execute_opcode(opcode);
-        check_interrupt_enable();
+          check_interrupt_enable();
         return cycles;
     }
     return 0;
