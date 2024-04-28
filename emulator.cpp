@@ -8,7 +8,6 @@ int intrpt_next_inst = -1;
 bool en_interrupt = 0;
 bool disen_interrupt = 0;
 
-int x;
 
 // opcode masks (only the ones with varying bits)
 // GMB 8 bit-load commands
@@ -182,70 +181,70 @@ void set_all_flags(BYTE z, BYTE s, BYTE h, BYTE c) {
 }
 
 void print_result() {
-    //printf("result = %x\n", reg_AF.hi);
-    //printf("flag z: %d\n", get_flag(FLAG_Z) );
-    //printf("flag s: %d\n", get_flag(FLAG_S) );
-    //printf("flag h: %d\n", get_flag(FLAG_H) );
-    //printf("flag c: %d\n\n", get_flag(FLAG_C) );
+    printf("result = %x\n", reg_AF.hi);
+    printf("flag z: %d\n", get_flag(FLAG_Z) );
+    printf("flag s: %d\n", get_flag(FLAG_S) );
+    printf("flag h: %d\n", get_flag(FLAG_H) );
+    printf("flag c: %d\n\n", get_flag(FLAG_C) );
 }
 
 void print_result_regs(BYTE bits) {
     switch(bits) {
         case 7 : // A
-            //printf("result = %d\n", reg_AF.hi);
-            //printf("flag z: %d\n", get_flag(FLAG_Z) );
-            //printf("flag s: %d\n", get_flag(FLAG_S) );
-            //printf("flag h: %d\n", get_flag(FLAG_H) );
-            //printf("flag c: %d\n\n", get_flag(FLAG_C) );
+            printf("result = %d\n", reg_AF.hi);
+            printf("flag z: %d\n", get_flag(FLAG_Z) );
+            printf("flag s: %d\n", get_flag(FLAG_S) );
+            printf("flag h: %d\n", get_flag(FLAG_H) );
+            printf("flag c: %d\n\n", get_flag(FLAG_C) );
             break;
         case 0 : // B
-            //printf("result = %d\n", reg_BC.hi);
-            //printf("flag z: %d\n", get_flag(FLAG_Z) );
-            //printf("flag s: %d\n", get_flag(FLAG_S) );
-            //printf("flag h: %d\n", get_flag(FLAG_H) );
-            //printf("flag c: %d\n\n", get_flag(FLAG_C) );
+            printf("result = %d\n", reg_BC.hi);
+            printf("flag z: %d\n", get_flag(FLAG_Z) );
+            printf("flag s: %d\n", get_flag(FLAG_S) );
+            printf("flag h: %d\n", get_flag(FLAG_H) );
+            printf("flag c: %d\n\n", get_flag(FLAG_C) );
             break;
         case 1 : // C
-            //printf("result = %d\n", reg_BC.lo);
-            //printf("flag z: %d\n", get_flag(FLAG_Z) );
-            //printf("flag s: %d\n", get_flag(FLAG_S) );
-            //printf("flag h: %d\n", get_flag(FLAG_H) );
-            //printf("flag c: %d\n\n", get_flag(FLAG_C) );
+            printf("result = %d\n", reg_BC.lo);
+            printf("flag z: %d\n", get_flag(FLAG_Z) );
+            printf("flag s: %d\n", get_flag(FLAG_S) );
+            printf("flag h: %d\n", get_flag(FLAG_H) );
+            printf("flag c: %d\n\n", get_flag(FLAG_C) );
             break;
         case 2 : // D
-            //printf("result = %d\n", reg_DE.hi);
-            //printf("flag z: %d\n", get_flag(FLAG_Z) );
-            //printf("flag s: %d\n", get_flag(FLAG_S) );
-            //printf("flag h: %d\n", get_flag(FLAG_H) );
-            //printf("flag c: %d\n\n", get_flag(FLAG_C) );
+            printf("result = %d\n", reg_DE.hi);
+            printf("flag z: %d\n", get_flag(FLAG_Z) );
+            printf("flag s: %d\n", get_flag(FLAG_S) );
+            printf("flag h: %d\n", get_flag(FLAG_H) );
+            printf("flag c: %d\n\n", get_flag(FLAG_C) );
             break;
         case 3 : // E
-            //printf("result = %d\n", reg_DE.lo);
-            //printf("flag z: %d\n", get_flag(FLAG_Z) );
-            //printf("flag s: %d\n", get_flag(FLAG_S) );
-            //printf("flag h: %d\n", get_flag(FLAG_H) );
-            //printf("flag c: %d\n\n", get_flag(FLAG_C) );
+            printf("result = %d\n", reg_DE.lo);
+            printf("flag z: %d\n", get_flag(FLAG_Z) );
+            printf("flag s: %d\n", get_flag(FLAG_S) );
+            printf("flag h: %d\n", get_flag(FLAG_H) );
+            printf("flag c: %d\n\n", get_flag(FLAG_C) );
             break;
         case 4 : // H
-            //printf("result = %d\n", reg_HL.hi);
-            //printf("flag z: %d\n", get_flag(FLAG_Z) );
-            //printf("flag s: %d\n", get_flag(FLAG_S) );
-            //printf("flag h: %d\n", get_flag(FLAG_H) );
-            //printf("flag c: %d\n\n", get_flag(FLAG_C) );
+            printf("result = %d\n", reg_HL.hi);
+            printf("flag z: %d\n", get_flag(FLAG_Z) );
+            printf("flag s: %d\n", get_flag(FLAG_S) );
+            printf("flag h: %d\n", get_flag(FLAG_H) );
+            printf("flag c: %d\n\n", get_flag(FLAG_C) );
             break;
         case 5 : // L
-            //printf("result = %d\n", reg_HL.lo);
-            //printf("flag z: %d\n", get_flag(FLAG_Z) );
-            //printf("flag s: %d\n", get_flag(FLAG_S) );
-            //printf("flag h: %d\n", get_flag(FLAG_H) );
-            //printf("flag c: %d\n\n", get_flag(FLAG_C) );
+            printf("result = %d\n", reg_HL.lo);
+            printf("flag z: %d\n", get_flag(FLAG_Z) );
+            printf("flag s: %d\n", get_flag(FLAG_S) );
+            printf("flag h: %d\n", get_flag(FLAG_H) );
+            printf("flag c: %d\n\n", get_flag(FLAG_C) );
             break;
         case 6 : // HL
-            //printf("result = %d\n", reg_HL.wrd);
-            //printf("flag z: %d\n", get_flag(FLAG_Z) );
-            //printf("flag s: %d\n", get_flag(FLAG_S) );
-            //printf("flag h: %d\n", get_flag(FLAG_H) );
-            //printf("flag c: %d\n\n", get_flag(FLAG_C) );
+            printf("result = %d\n", reg_HL.wrd);
+            printf("flag z: %d\n", get_flag(FLAG_Z) );
+            printf("flag s: %d\n", get_flag(FLAG_S) );
+            printf("flag h: %d\n", get_flag(FLAG_H) );
+            printf("flag c: %d\n\n", get_flag(FLAG_C) );
             break;
     }    
 }
@@ -890,13 +889,11 @@ int execute_opcode(BYTE op) {
         case 0xF3 : // di
             //printf("di\n");
             // disables interrupts after 1 instruction delay
-            // intrpt_next_inst = 0;
             disen_interrupt = 1;
             return 4;
         case 0xFB : // ei
             //printf("ei\n");
             // enable interrupts after 1 instruction delay
-            //intrpt_next_inst = 0;
             en_interrupt = 1;
             return 4;
             
@@ -1177,19 +1174,6 @@ void check_interrupt_enable() {
         }
     } 
 
-
-    // if (intrpt_next_inst == 1) {
-    //     if (en_interrupt) {
-    //         interrupt_switch = 1;
-    //     } else {
-    //         interrupt_switch = 0;
-    //     }
-    //     intrpt_next_inst = -1;
-    // } else if (intrpt_next_inst == 0) {
-    //     intrpt_next_inst = 1;
-    // } else {
-    //     intrpt_next_inst = -1; // no enable/disable
-    // }
 }
 
 extern ofstream myfile;
@@ -1211,43 +1195,9 @@ int execute_next_opcode() {
     // returns the number of cycles for the instruction
     if(!halt) {
         BYTE opcode = read_memory(program_counter);
-        if (program_counter == 0x101) {
-            //printf("cartridge: %0x\n", cartridge_memory[0x101]);
-        }
-        // printf("pc: %0X\n", program_counter);
-        // printf("opcode: %0X\n", opcode);
-
-        myfile << "pc: " << std::hex << program_counter << "\n";
-        //myfile << "opcode: " << std::hex << (int)opcode << "\n";
-        myfile << "lcd enabled" << std::hex << " " << (int)read_memory(0xFF40) << "\n";
-        // if (program_counter == 0x100) {
-        //     printf("PC: %x\n", program_counter);
-        //     printf("OPCODE: %x\n", opcode);
-        //     x++;
-        // }
-        doctorlog << "A:" << std::setfill('0') << std::hex << std::setw(2) << (int)reg_AF.hi 
-          << " F:" << std::hex << std::setw(2) << (int)reg_AF.lo 
-          << " B:" << std::hex << std::setw(2) << (int)reg_BC.hi 
-          << " C:" << std::hex << std::setw(2) << (int)reg_BC.lo 
-          << " D:" << std::hex << std::setw(2) << (int)reg_DE.hi 
-          << " E:" << std::hex << std::setw(2) << (int)reg_DE.lo 
-          << " H:" << std::hex << std::setw(2) << (int)reg_HL.hi 
-          << " L:" << std::hex << std::setw(2) << (int)reg_HL.lo 
-          << " SP:" << std::hex << std::setw(4) << (int)stack_pointer.wrd 
-          << " PC:" << std::hex << std::setw(4) << (int)(program_counter) 
-          << " PCMEM:" << std::hex << std::setw(2) << (int)read_memory(program_counter) 
-          << "," << std::hex << std::setw(2) << (int)read_memory(program_counter + 1) 
-          << "," << std::hex << std::setw(2) << (int)read_memory(program_counter + 2) 
-          << "," << std::hex << std::setw(2) << (int)read_memory(program_counter + 3) 
-          << "\n"; 
-        // doctorlog << "ROM FF44: " << std::hex << (int)rom[0xFF44] << "\n";
-        if (program_counter == 0xC17C) {
-            printf("PC: %x\n", program_counter);
-            printf("OPCODE: %x\n", opcode);
-        }
         program_counter++;
         int cycles = execute_opcode(opcode);
-          check_interrupt_enable();
+        check_interrupt_enable();
         return cycles;
     }
     return 0;
