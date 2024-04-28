@@ -253,11 +253,18 @@ void print_result_regs(BYTE bits) {
 // for adding with registers and immediates (8 bit only)
 void execute_add(bool carry, BYTE n) {
     BYTE sum = reg_AF.hi + n;
-    int int_sum = reg_AF.hi + n;
-    if(carry) sum += get_flag(FLAG_C);
-    BYTE half_sum = (reg_AF.hi & 0b1111) + (n & 0b1111);
+    uint64_t int_sum = reg_AF.hi + n;
+    uint64_t half_sum = (reg_AF.hi & 0b1111) + (n & 0b1111);
+    if(carry) {
+        sum += get_flag(FLAG_C);
+        int_sum += get_flag(FLAG_C);
+        half_sum += get_flag(FLAG_C);
+    } 
 
-    set_all_flags(sum == 0, 0, half_sum > 0xf, int_sum > 0xff);
+    bool half_carry = half_sum > 0x0F; // Check if there's a carry from lower nibble
+    bool full_carry = int_sum > 0xFF; // Check if there's a carry from MSB
+
+    set_all_flags(sum == 0, 0, half_carry, full_carry);
     reg_AF.hi = sum;
 }
 
@@ -266,23 +273,32 @@ void execute_add_HL_rr(Register* reg) {
     int int_sum = reg_HL.wrd + (*reg).wrd;
     WORD half_sum = (reg_HL.wrd & 0xfff) + ((*reg).wrd & 0xfff);
 
-    set_all_flags(sum == 0, 0, half_sum > 0xfff, int_sum > 0xffff);
+    set_flag(FLAG_S, 0);
+    set_flag(FLAG_H, half_sum > 0xfff);
+    set_flag(FLAG_C, int_sum > 0xffff);
     reg_HL.wrd = sum;
 }
 
 void execute_sub(bool carry, BYTE n) {
     BYTE diff = reg_AF.hi - n;
-    if(carry) diff -= get_flag(FLAG_C);
-    BYTE bottomHalfA = reg_AF.hi & 0b1111;
-    BYTE bottomHalfN = n & 0b1111;
+    int int_diff = (int)(reg_AF.hi) - (int)(n);
+    int half_diff = (int)(reg_AF.hi & 0b1111) - (int)(n & 0b1111);
+    if(carry) {
+        diff -= get_flag(FLAG_C);
+        int_diff -= get_flag(FLAG_C);
+        half_diff -= get_flag(FLAG_C);
+    } 
 
-    set_all_flags(diff == 0, 1, bottomHalfA < bottomHalfN, reg_AF.hi < n);
+    bool full_carry = int_diff < 0;
+    bool half_carry = half_diff < 0;
+
+    set_all_flags(diff == 0, 1, half_carry, full_carry);
     reg_AF.hi = diff;
 }
 
 void execute_and(BYTE n) {
     BYTE res = reg_AF.hi & n;
-    set_all_flags(res == 0, 0, 0, 0);
+    set_all_flags(res == 0, 0, 1, 0);
     reg_AF.hi = res;
 }
 
@@ -378,6 +394,7 @@ void execute_left_shift_rotate(BYTE reg_num, WORD addr, BYTE n, bool is_reg, BYT
 void execute_right_shift_rotate(BYTE reg_num, WORD addr, BYTE n, bool is_reg, BYTE type) {
     BYTE bit_0 = n & 1;
     BYTE res = n >> 1;
+
     if(type == 0) res |= (bit_0 << 7); // rotate circular
     else if(type == 1) res |= (get_flag(FLAG_C) << 7); // rotate
     else if(type == 2) res |= n >> 7; // shift arithmetic
@@ -388,7 +405,8 @@ void execute_right_shift_rotate(BYTE reg_num, WORD addr, BYTE n, bool is_reg, BY
 }
 
 void execute_swap(BYTE reg_num, WORD addr, BYTE n, bool is_reg) {
-    BYTE res = (n >> 4) | (n & 0b1111);
+    BYTE res = ((n & 0b1111) << 4) | (n >> 4);
+    // BYTE res = (n >> 4) | (n & 0b1111);
     set_all_flags(res == 0, 0, 0, 0);
     if(is_reg) set_reg_8(reg_num, res);
     else write_memory(addr, res);
@@ -620,6 +638,10 @@ int execute_opcode(BYTE op) {
             program_counter++;
             addr = 0xFF00 + second;
             val = read_memory(addr);
+            // if (program_counter == 0xC6C9) {
+            //     printf("address: %x\n", addr);
+            //     printf("val = %x\n", val);
+            // }
             set_reg_8(7, val);
             return 12;
         case 0xE0 : // ld FF00+n, A
@@ -832,21 +854,25 @@ int execute_opcode(BYTE op) {
             //printf("rlca\n");
             val = get_reg_value_8(7);
             execute_left_shift_rotate(7, 0, val, true, 0);
+            set_flag(FLAG_Z, 0);
             return 4; 
         case 0x17 : // rla
             //printf("rla\n");
             val = get_reg_value_8(7);
             execute_left_shift_rotate(7, 0, val, true, 1);
+            set_flag(FLAG_Z, 0);
             return 4;
         case 0x0F : // rrca
             //printf("rrca\n");
             val = get_reg_value_8(7);
             execute_right_shift_rotate(7, 0, val, true, 0);
+            set_flag(FLAG_Z, 0);
             return 4;
         case 0x1F : // rra
             //printf("rra\n");
             val = get_reg_value_8(7);
             execute_right_shift_rotate(7, 0, val, true, 1);
+            set_flag(FLAG_Z, 0);
             return 4;
         
         // CPU CONTROL
@@ -1214,6 +1240,7 @@ int execute_next_opcode() {
           << "," << std::hex << std::setw(2) << (int)read_memory(program_counter + 2) 
           << "," << std::hex << std::setw(2) << (int)read_memory(program_counter + 3) 
           << "\n"; 
+        // doctorlog << "ROM FF44: " << std::hex << (int)rom[0xFF44] << "\n";
         if (program_counter == 0xC17C) {
             printf("PC: %x\n", program_counter);
             printf("OPCODE: %x\n", opcode);

@@ -17,7 +17,7 @@ Register stack_pointer = {0xFFFE};
 BYTE rom[0x10000];
 
 void initialize_rom() {
-    rom[0xFF00] = 0x00;
+    rom[0xFF00] = 0xFF;
     rom[0xFF05] = 0x00;
     rom[0xFF06] = 0x00;
     rom[0xFF07] = 0x00;
@@ -62,6 +62,7 @@ bool rom_banking;
 
 ofstream myfile;
 ofstream screen_file;
+ofstream doctorlog;
 
 /* -------------
      MEMORY
@@ -116,18 +117,8 @@ BYTE read_memory(WORD address) {
         return ram_banks[address - 0xA000 + current_ram_bank * 0x4000];
     } else if (address == 0xFF00) {
         // return joypad state
-        //printf("jp FF");
-        //return 0xFF;
-        /*BYTE jp = get_joypad_state();
-        printf("jp %X", jp);
-        return jp;*/
-        // myfile << "jp FF" << "\n";
         BYTE result = rom[0xFF00];
         result ^= 0xFF; // flip bits
-
-        // if (program_counter >= 0x39f) {
-        //     printf("AFTER THE CREDITS PLEASE PRINT\n");
-        // }
 
         if (!((result >> 4) & 1)) {
             // standard buttons
@@ -141,10 +132,12 @@ BYTE read_memory(WORD address) {
             result &= bottom_jp; // returns pressed buttons
         }
 
-        //printf("result: %0X", result);
         return result;
-        //return get_joypad_state();
-    } else {
+    } 
+    // else if (address == 0xFF44) {
+    //     return 0x90; // REMOVE
+    // }
+    else {
         return rom[address];
     }
 }
@@ -159,26 +152,17 @@ void dma_transfer(BYTE data) {
 }
 
 void write_memory(WORD address, BYTE data) {
-    // if(address == 0xFF01) 
-    //     printf("data = %x\n", data);
-    if (address == 0xFF02 && data == 0x81) {
-		printf("hi %c\n", read_memory(0xFF01));
-    }
-
     if (address == 0xFF00) {
-        printf("ADDRESS IS FF00\n");
-        printf("pc = %x, writing %0X\n", program_counter, data);
-        // if(!((data >> 7) & 1)) printf("disabled lcd\n");
+        printf("ADDRESS = FF00 : DATA = %0X\n", data);
+        printf("program counter: %x\n", program_counter);
     }
-
-    if (address == 0xFF81) {
-        printf("ADDRESS IS FF81\n");
+    if(address == 0xFF01 || (address == 0xFF02 && data == 0x81) ||
+        address == 0xFF44) 
+        return;
+    if (address == 0xFD02) {
+        printf("addy is fd02\n");
         printf("pc = %x, writing %0X\n", program_counter, data);
-        // if(!((data >> 7) & 1)) printf("disabled lcd\n");
     }
-
-    // printf("WRITING TO MEMORY %0X\n", address);
-
     if (address < 0x8000) {
         // ROM banking
         handle_banking(address, data);
@@ -192,11 +176,10 @@ void write_memory(WORD address, BYTE data) {
         // don't need to implement
         rom[address] = data ;
         write_memory(address-0x2000, data) ;
-    } else if (address >= 0xFEA0 && address < 0xFEFF) {
-        // restricted - don't edit
-    } else if (address == 0xFF04) {
-        // divider register is restricted (don't edit)
-        rom[0xFF04] = 0 ;
+    } else if (address >= 0xFEA0 && address < 0xFEFF) 
+        return;
+    else if (address == 0xFF04) {
+        return;
     } else if (address == TMC) {
         // trying to change timer controller
         BYTE current_frequency = get_clock_frequency();
@@ -208,18 +191,11 @@ void write_memory(WORD address, BYTE data) {
             set_clock_frequency();
         }
     } else if (address == 0xFF44) {
-        // can't write to scan line memory address
-        rom[address] = 0 ;
+        return;
     } else if (address == 0xFF46) {
         dma_transfer(data);
     } else {
         // no restriction
-        if(address >= 0x8000) {
-            //printf("pc = %x, address = %x, data = %x\n", program_counter, address, data);
-            // myfile << "de = " << hex << (int)reg_DE.wrd << "\n";
-            // myfile << "(de) = " << hex << (int)read_memory(reg_DE.wrd) << "\n";
-            myfile << "writing to " << hex << address << ", data = " << hex << (int)data << "\n";
-        }
         rom[address] = data;
     }
 }
